@@ -1,0 +1,75 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  IMPORTANT: NEXT STEP - SET UP YOUR DATABASE IN SUPABASE     ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Your application is now running at: http://localhost:3000
+
+BUT BEFORE YOU CAN LOGIN, you MUST set up the database tables!
+
+═══════════════════════════════════════════════════════════════
+
+📋 FOLLOW THESE STEPS:
+
+1. Open your browser and go to:
+   https://supabase.com/dashboard/project/yfqgncfnnvdmthyrpnad
+
+2. Click on "SQL Editor" in the left sidebar
+   (it has a database icon)
+
+3. Open this file in your code editor:
+   database/migrations/001_initial_setup.sql
+
+4. Copy ALL the content from that file
+
+5. Go back to Supabase SQL Editor
+
+6. Paste the entire SQL code into the editor
+
+7. Click the "Run" button (or press Ctrl+Enter)
+
+8. You should see: "Success. No rows returned"
+
+═══════════════════════════════════════════════════════════════
+
+✅ AFTER RUNNING THE SQL:
+
+Your database will have:
+- ✓ users table (with default admin)
+- ✓ patients table
+- ✓ doctors table  
+- ✓ appointments table
+
+═══════════════════════════════════════════════════════════════
+
+🔐 DEFAULT LOGIN CREDENTIALS:
+
+Email:    admin@hospital.com
+Password: admin123
+
+═══════════════════════════════════════════════════════════════
+
+📖 THEN YOU CAN:
+
+1. Go to http://localhost:3000
+2. Login with admin credentials
+3. Create doctors
+4. Create patients
+5. Schedule appointments!
+
+═══════════════════════════════════════════════════════════════
+
+❓ TROUBLESHOOTING:
+
+If you see "Invalid email or password":
+→ Make sure you ran the SQL migration in Supabase
+
+If you see database connection errors:
+→ Check that your .env.local file has the correct keys
+→ Make sure your Supabase project is active
+
+If the login page doesn't load:
+→ Make sure the dev server is running (pnpm dev)
+
+═══════════════════════════════════════════════════════════════
+
+Need help? Check README.md for more detailed instructions!
