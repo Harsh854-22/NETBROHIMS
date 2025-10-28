@@ -5,7 +5,7 @@ export type User = {
   id: string
   email: string
   name: string
-  role: 'admin' | 'doctor' | 'patient'
+  role: 'admin' | 'doctor' | 'patient' | 'pharmacist'
   phone?: string
 }
 
@@ -43,7 +43,7 @@ export async function login(email: string, password: string): Promise<User | nul
 export async function createUser(
   email: string,
   name: string,
-  role: 'admin' | 'doctor' | 'patient',
+  role: 'admin' | 'doctor' | 'patient' | 'pharmacist',
   password: string,
   phone?: string
 ): Promise<User | null> {

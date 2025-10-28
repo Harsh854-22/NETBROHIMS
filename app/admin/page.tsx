@@ -9,15 +9,16 @@ type User = {
   id: string
   email: string
   name: string
-  role: 'admin' | 'doctor' | 'patient'
+  role: 'admin' | 'doctor' | 'patient' | 'pharmacist'
   phone?: string
 }
 
 export default function AdminPage() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'doctors' | 'patients' | 'appointments'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'doctors' | 'patients' | 'appointments' | 'pharmacists'>('dashboard')
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     checkAuth()
@@ -125,15 +126,27 @@ export default function AdminPage() {
             >
               📅 Appointments
             </button>
+            <button
+              onClick={() => setActiveTab('pharmacists')}
+              className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all ${
+                activeTab === 'pharmacists'
+                  ? 'text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+              style={activeTab === 'pharmacists' ? { backgroundColor: '#006989' } : {}}
+            >
+              💊 Pharmacists
+            </button>
           </nav>
         </div>
 
         {/* Content */}
         <div className="mt-6">
           {activeTab === 'dashboard' && <DashboardView />}
-          {activeTab === 'doctors' && <DoctorsView currentUserId={currentUser?.id || ''} />}
+          {activeTab === 'doctors' && <DoctorsView currentUserId={currentUser?.id || ''} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
           {activeTab === 'patients' && <PatientsView currentUserId={currentUser?.id || ''} />}
-          {activeTab === 'appointments' && <AppointmentsView currentUserId={currentUser?.id || ''} />}
+          {activeTab === 'appointments' && <AppointmentsView searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
+          {activeTab === 'pharmacists' && <PharmacistsView />}
         </div>
       </div>
     </div>
@@ -214,7 +227,11 @@ type Doctor = {
   }
 }
 
-function DoctorsView({ currentUserId }: { currentUserId: string }) {
+function DoctorsView({ currentUserId, searchTerm, setSearchTerm }: { 
+  currentUserId: string
+  searchTerm: string
+  setSearchTerm: (term: string) => void
+}) {
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
@@ -306,12 +323,21 @@ function DoctorsView({ currentUserId }: { currentUserId: string }) {
     <div className="bg-white rounded-lg shadow p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold">Doctors Management</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
-        >
-          {showForm ? 'Cancel' : 'Add Doctor'}
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="🔍 Search doctors..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="px-3 py-1.5 border border-gray-300 rounded text-xs"
+          />
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+          >
+            {showForm ? 'Cancel' : 'Add Doctor'}
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -406,7 +432,17 @@ function DoctorsView({ currentUserId }: { currentUserId: string }) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {doctors.map((doctor) => (
+            {doctors
+              .filter(doctor => {
+                if (!searchTerm) return true
+                const search = searchTerm.toLowerCase()
+                return (
+                  doctor.users?.name?.toLowerCase().includes(search) ||
+                  doctor.users?.email?.toLowerCase().includes(search) ||
+                  doctor.specialization?.toLowerCase().includes(search)
+                )
+              })
+              .map((doctor) => (
               <tr key={doctor.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">{doctor.users?.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">{doctor.users?.email}</td>
@@ -709,7 +745,10 @@ type Appointment = {
   }
 }
 
-function AppointmentsView({ currentUserId }: { currentUserId: string }) {
+function AppointmentsView({ searchTerm, setSearchTerm }: {
+  searchTerm: string
+  setSearchTerm: (term: string) => void
+}) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
@@ -726,6 +765,13 @@ function AppointmentsView({ currentUserId }: { currentUserId: string }) {
     loadAppointments()
     loadDoctors()
     loadPatients()
+    
+    // Poll for updates every 10 seconds
+    const interval = setInterval(() => {
+      loadAppointments()
+    }, 10000)
+    
+    return () => clearInterval(interval)
   }, [])
 
   const loadAppointments = async () => {
@@ -821,8 +867,7 @@ function AppointmentsView({ currentUserId }: { currentUserId: string }) {
       appointment_date: formData.appointment_date,
       appointment_time: formData.appointment_time,
       reason: formData.reason,
-      status: 'pending',
-      created_by: currentUserId
+      status: 'pending'
     })
 
     if (error) {
@@ -851,12 +896,21 @@ function AppointmentsView({ currentUserId }: { currentUserId: string }) {
     <div className="bg-white rounded-lg shadow p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold">Appointments Management</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
-        >
-          {showForm ? 'Cancel' : 'Schedule Appointment'}
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="🔍 Search appointments..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="px-3 py-1.5 border border-gray-300 rounded text-xs"
+          />
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+          >
+            {showForm ? 'Cancel' : 'Schedule Appointment'}
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -947,7 +1001,19 @@ function AppointmentsView({ currentUserId }: { currentUserId: string }) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {appointments.map((appointment) => (
+            {appointments
+              .filter(appointment => {
+                if (!searchTerm) return true
+                const search = searchTerm.toLowerCase()
+                return (
+                  appointment.patients?.users?.name?.toLowerCase().includes(search) ||
+                  appointment.doctors?.users?.name?.toLowerCase().includes(search) ||
+                  appointment.status?.toLowerCase().includes(search) ||
+                  appointment.reason?.toLowerCase().includes(search) ||
+                  appointment.appointment_date?.includes(searchTerm)
+                )
+              })
+              .map((appointment) => (
               <tr key={appointment.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">{appointment.patients?.users?.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -992,6 +1058,610 @@ function AppointmentsView({ currentUserId }: { currentUserId: string }) {
           </tbody>
         </table>
       </div>
+    </div>
+  )
+}
+
+// Pharmacists Management View
+function PharmacistsView() {
+  const [pharmacyShops, setPharmacyShops] = useState<{
+    id: string
+    name: string
+    address?: string
+    phone?: string
+    email?: string
+    license_number?: string
+  }[]>([])
+  const [pharmacists, setPharmacists] = useState<{
+    id: string
+    user_id: string
+    pharmacy_shop_id?: string
+    license_number?: string
+    users?: {
+      id: string
+      name: string
+      email: string
+      phone?: string
+    }
+    pharmacy_shops?: {
+      id: string
+      name: string
+    }
+  }[]>([])
+  const [doctors, setDoctors] = useState<{
+    id: string
+    users?: {
+      id: string
+      name: string
+      email: string
+    }
+  }[]>([])
+  const [activeTab, setActiveTab] = useState<'shops' | 'pharmacists' | 'assignments'>('shops')
+  const [showShopForm, setShowShopForm] = useState(false)
+  const [showPharmacistForm, setShowPharmacistForm] = useState(false)
+  const [showAssignmentForm, setShowAssignmentForm] = useState(false)
+  const [shopFormData, setShopFormData] = useState({
+    name: '',
+    address: '',
+    phone: '',
+    email: '',
+    license_number: ''
+  })
+  const [pharmacistFormData, setPharmacistFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    pharmacy_shop_id: '',
+    license_number: ''
+  })
+  const [assignmentFormData, setAssignmentFormData] = useState({
+    doctor_id: '',
+    pharmacy_shop_id: ''
+  })
+  const [assignments, setAssignments] = useState<{
+    id: string
+    doctor_id: string
+    pharmacy_shop_id: string
+    doctors?: {
+      id: string
+      users?: {
+        name: string
+        email: string
+      }
+    }
+    pharmacy_shops?: {
+      id: string
+      name: string
+    }
+  }[]>([])
+
+  useEffect(() => {
+    loadPharmacyShops()
+    loadPharmacists()
+    loadDoctors()
+    loadAssignments()
+  }, [])
+
+  const loadPharmacyShops = async () => {
+    const { data, error } = await supabase
+      .from('pharmacy_shops')
+      .select('*')
+      .order('name')
+
+    if (!error && data) {
+      setPharmacyShops(data)
+    }
+  }
+
+  const loadPharmacists = async () => {
+    const { data, error } = await supabase
+      .from('pharmacists')
+      .select(`
+        *,
+        users:user_id (id, name, email, phone),
+        pharmacy_shops:pharmacy_shop_id (id, name)
+      `)
+
+    if (!error && data) {
+      setPharmacists(data)
+    }
+  }
+
+  const loadDoctors = async () => {
+    const { data, error } = await supabase
+      .from('doctors')
+      .select(`
+        *,
+        users:user_id (id, name, email)
+      `)
+
+    if (!error && data) {
+      setDoctors(data)
+    }
+  }
+
+  const loadAssignments = async () => {
+    const { data, error } = await supabase
+      .from('doctor_pharmacy_assignments')
+      .select(`
+        *,
+        doctors (
+          id,
+          users:user_id (name, email)
+        ),
+        pharmacy_shops (id, name)
+      `)
+
+    if (!error && data) {
+      setAssignments(data)
+    }
+  }
+
+  const handleShopSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    const { error } = await supabase.from('pharmacy_shops').insert({
+      name: shopFormData.name,
+      address: shopFormData.address,
+      phone: shopFormData.phone,
+      email: shopFormData.email,
+      license_number: shopFormData.license_number
+    })
+
+    if (error) {
+      alert('Error creating pharmacy shop')
+      return
+    }
+
+    alert('Pharmacy shop created successfully!')
+    setShowShopForm(false)
+    setShopFormData({ name: '', address: '', phone: '', email: '', license_number: '' })
+    loadPharmacyShops()
+  }
+
+  const handlePharmacistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Create user
+    const user = await createUser(pharmacistFormData.email, pharmacistFormData.name, 'pharmacist', pharmacistFormData.password, pharmacistFormData.phone)
+    
+    if (!user) {
+      alert('Error creating pharmacist user')
+      return
+    }
+
+    // Create pharmacist profile
+    const { error } = await supabase.from('pharmacists').insert({
+      user_id: user.id,
+      pharmacy_shop_id: pharmacistFormData.pharmacy_shop_id || null,
+      license_number: pharmacistFormData.license_number
+    })
+
+    if (error) {
+      alert('Error creating pharmacist profile')
+      return
+    }
+
+    alert('Pharmacist created successfully!')
+    setShowPharmacistForm(false)
+    setPharmacistFormData({ name: '', email: '', phone: '', password: '', pharmacy_shop_id: '', license_number: '' })
+    loadPharmacists()
+  }
+
+  const handleAssignmentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    const { error } = await supabase.from('doctor_pharmacy_assignments').insert({
+      doctor_id: assignmentFormData.doctor_id,
+      pharmacy_shop_id: assignmentFormData.pharmacy_shop_id
+    })
+
+    if (error) {
+      if (error.code === '23505') {
+        alert('This doctor is already assigned to this pharmacy!')
+      } else {
+        alert('Error creating assignment')
+      }
+      return
+    }
+
+    alert('Doctor assigned to pharmacy successfully!')
+    setShowAssignmentForm(false)
+    setAssignmentFormData({ doctor_id: '', pharmacy_shop_id: '' })
+    loadAssignments()
+  }
+
+  const handleDeleteShop = async (shopId: string) => {
+    if (!confirm('Are you sure? This will unassign all pharmacists and doctors from this shop.')) {
+      return
+    }
+
+    const { error } = await supabase.from('pharmacy_shops').delete().eq('id', shopId)
+    
+    if (error) {
+      alert('Error deleting pharmacy shop')
+      return
+    }
+
+    alert('Pharmacy shop deleted successfully!')
+    loadPharmacyShops()
+    loadPharmacists()
+    loadAssignments()
+  }
+
+  const handleDeletePharmacist = async (pharmacistId: string, userId: string) => {
+    if (!confirm('Are you sure you want to delete this pharmacist?')) {
+      return
+    }
+
+    await supabase.from('pharmacists').delete().eq('id', pharmacistId)
+    await supabase.from('users').delete().eq('id', userId)
+
+    alert('Pharmacist deleted successfully!')
+    loadPharmacists()
+  }
+
+  const handleDeleteAssignment = async (assignmentId: string) => {
+    if (!confirm('Remove this assignment?')) {
+      return
+    }
+
+    const { error } = await supabase.from('doctor_pharmacy_assignments').delete().eq('id', assignmentId)
+    
+    if (error) {
+      alert('Error deleting assignment')
+      return
+    }
+
+    alert('Assignment removed successfully!')
+    loadAssignments()
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow p-4">
+      <h2 className="text-lg font-bold mb-4">Pharmacist & Pharmacy Management</h2>
+
+      {/* Sub-tabs */}
+      <div className="mb-4 border-b">
+        <nav className="flex space-x-4">
+          <button
+            onClick={() => setActiveTab('shops')}
+            className={`pb-2 px-1 font-medium text-xs ${activeTab === 'shops' ? 'border-b-2 text-blue-600' : 'text-gray-500'}`}
+            style={activeTab === 'shops' ? { borderColor: '#006989', color: '#006989' } : {}}
+          >
+            🏪 Pharmacy Shops
+          </button>
+          <button
+            onClick={() => setActiveTab('pharmacists')}
+            className={`pb-2 px-1 font-medium text-xs ${activeTab === 'pharmacists' ? 'border-b-2 text-blue-600' : 'text-gray-500'}`}
+            style={activeTab === 'pharmacists' ? { borderColor: '#006989', color: '#006989' } : {}}
+          >
+            💊 Pharmacists
+          </button>
+          <button
+            onClick={() => setActiveTab('assignments')}
+            className={`pb-2 px-1 font-medium text-xs ${activeTab === 'assignments' ? 'border-b-2 text-blue-600' : 'text-gray-500'}`}
+            style={activeTab === 'assignments' ? { borderColor: '#006989', color: '#006989' } : {}}
+          >
+            🔗 Doctor-Pharmacy Links
+          </button>
+        </nav>
+      </div>
+
+      {/* Pharmacy Shops Tab */}
+      {activeTab === 'shops' && (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold text-sm">Pharmacy Shops ({pharmacyShops.length})</h3>
+            <button
+              onClick={() => setShowShopForm(!showShopForm)}
+              className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+            >
+              {showShopForm ? 'Cancel' : '+ Add Pharmacy Shop'}
+            </button>
+          </div>
+
+          {showShopForm && (
+            <form onSubmit={handleShopSubmit} className="mb-4 p-3 border rounded-lg space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">Shop Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={shopFormData.name}
+                    onChange={(e) => setShopFormData({ ...shopFormData, name: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">Email</label>
+                  <input
+                    type="email"
+                    value={shopFormData.email}
+                    onChange={(e) => setShopFormData({ ...shopFormData, email: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">Phone</label>
+                  <input
+                    type="tel"
+                    value={shopFormData.phone}
+                    onChange={(e) => setShopFormData({ ...shopFormData, phone: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">License Number</label>
+                  <input
+                    type="text"
+                    value={shopFormData.license_number}
+                    onChange={(e) => setShopFormData({ ...shopFormData, license_number: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-gray-700">Address</label>
+                  <textarea
+                    value={shopFormData.address}
+                    onChange={(e) => setShopFormData({ ...shopFormData, address: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                    rows={2}
+                  />
+                </div>
+              </div>
+              <button type="submit" className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-xs">
+                Create Pharmacy Shop
+              </button>
+            </form>
+          )}
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">License</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {pharmacyShops.map((shop) => (
+                  <tr key={shop.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{shop.name}</td>
+                    <td className="px-6 py-4 text-sm">{shop.address || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{shop.phone || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{shop.email || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{shop.license_number || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => handleDeleteShop(shop.id)}
+                        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Pharmacists Tab */}
+      {activeTab === 'pharmacists' && (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold text-sm">Pharmacists ({pharmacists.length})</h3>
+            <button
+              onClick={() => setShowPharmacistForm(!showPharmacistForm)}
+              className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+            >
+              {showPharmacistForm ? 'Cancel' : '+ Add Pharmacist'}
+            </button>
+          </div>
+
+          {showPharmacistForm && (
+            <form onSubmit={handlePharmacistSubmit} className="mb-4 p-3 border rounded-lg space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={pharmacistFormData.name}
+                    onChange={(e) => setPharmacistFormData({ ...pharmacistFormData, name: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">Email *</label>
+                  <input
+                    type="email"
+                    required
+                    value={pharmacistFormData.email}
+                    onChange={(e) => setPharmacistFormData({ ...pharmacistFormData, email: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">Phone</label>
+                  <input
+                    type="tel"
+                    value={pharmacistFormData.phone}
+                    onChange={(e) => setPharmacistFormData({ ...pharmacistFormData, phone: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">Password *</label>
+                  <input
+                    type="password"
+                    required
+                    value={pharmacistFormData.password}
+                    onChange={(e) => setPharmacistFormData({ ...pharmacistFormData, password: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">Assign to Pharmacy</label>
+                  <select
+                    value={pharmacistFormData.pharmacy_shop_id}
+                    onChange={(e) => setPharmacistFormData({ ...pharmacistFormData, pharmacy_shop_id: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                  >
+                    <option value="">Select Pharmacy (Optional)</option>
+                    {pharmacyShops.map((shop) => (
+                      <option key={shop.id} value={shop.id}>{shop.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">License Number</label>
+                  <input
+                    type="text"
+                    value={pharmacistFormData.license_number}
+                    onChange={(e) => setPharmacistFormData({ ...pharmacistFormData, license_number: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                  />
+                </div>
+              </div>
+              <button type="submit" className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-xs">
+                Create Pharmacist
+              </button>
+            </form>
+          )}
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pharmacy</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">License</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {pharmacists.map((pharmacist) => (
+                  <tr key={pharmacist.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{pharmacist.users?.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{pharmacist.users?.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{pharmacist.users?.phone || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{pharmacist.pharmacy_shops?.name || 'Unassigned'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{pharmacist.license_number || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => handleDeletePharmacist(pharmacist.id, pharmacist.users?.id || '')}
+                        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+                        disabled={!pharmacist.users?.id}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Doctor-Pharmacy Assignments Tab */}
+      {activeTab === 'assignments' && (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h3 className="font-semibold text-sm">Doctor-Pharmacy Assignments ({assignments.length})</h3>
+              <p className="text-xs text-gray-500 mt-1">Link doctors to pharmacies so prescriptions are auto-sent</p>
+            </div>
+            <button
+              onClick={() => setShowAssignmentForm(!showAssignmentForm)}
+              className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+            >
+              {showAssignmentForm ? 'Cancel' : '+ Link Doctor to Pharmacy'}
+            </button>
+          </div>
+
+          {showAssignmentForm && (
+            <form onSubmit={handleAssignmentSubmit} className="mb-4 p-3 border rounded-lg space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">Select Doctor *</label>
+                  <select
+                    required
+                    value={assignmentFormData.doctor_id}
+                    onChange={(e) => setAssignmentFormData({ ...assignmentFormData, doctor_id: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                  >
+                    <option value="">Choose a doctor...</option>
+                    {doctors.map((doctor) => (
+                      <option key={doctor.id} value={doctor.id}>
+                        {doctor.users?.name} ({doctor.users?.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700">Select Pharmacy *</label>
+                  <select
+                    required
+                    value={assignmentFormData.pharmacy_shop_id}
+                    onChange={(e) => setAssignmentFormData({ ...assignmentFormData, pharmacy_shop_id: e.target.value })}
+                    className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                  >
+                    <option value="">Choose a pharmacy...</option>
+                    {pharmacyShops.map((shop) => (
+                      <option key={shop.id} value={shop.id}>{shop.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <button type="submit" className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-xs">
+                Create Assignment
+              </button>
+            </form>
+          )}
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Doctor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Doctor Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pharmacy Shop</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {assignments.map((assignment) => (
+                  <tr key={assignment.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{assignment.doctors?.users?.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{assignment.doctors?.users?.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{assignment.pharmacy_shops?.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => handleDeleteAssignment(assignment.id)}
+                        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

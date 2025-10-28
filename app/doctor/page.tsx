@@ -10,7 +10,7 @@ type User = {
   id: string
   email: string
   name: string
-  role: 'admin' | 'doctor' | 'patient'
+  role: 'admin' | 'doctor' | 'patient' | 'pharmacist'
   phone?: string
 }
 
@@ -44,6 +44,7 @@ export default function DoctorPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'completed'>('all')
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     checkAuth()
@@ -179,6 +180,7 @@ export default function DoctorPage() {
   }
 
   const saveNotesAndPrescription = async (appointmentId: string, notes: string, prescription: string) => {
+    // First, update the appointment with notes and prescription
     const { error } = await supabase
       .from('appointments')
       .update({ 
@@ -192,7 +194,52 @@ export default function DoctorPage() {
       return
     }
 
-    alert('Notes and prescription saved successfully!')
+    // If there's a prescription, send it to the assigned pharmacy
+    if (prescription && prescription.trim()) {
+      try {
+        // Get the appointment details with patient info
+        const { data: appointment } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            patients (id, users:user_id (name, phone))
+          `)
+          .eq('id', appointmentId)
+          .single()
+
+        if (appointment) {
+          // Check if doctor is assigned to a pharmacy
+          const { data: assignment } = await supabase
+            .from('doctor_pharmacy_assignments')
+            .select('pharmacy_shop_id')
+            .eq('doctor_id', doctorId)
+            .single()
+
+          if (assignment) {
+            // Add prescription to pharmacy queue
+            await supabase.from('prescription_queue').insert({
+              appointment_id: appointmentId,
+              pharmacy_shop_id: assignment.pharmacy_shop_id,
+              doctor_id: doctorId,
+              patient_id: appointment.patient_id,
+              prescription: prescription,
+              doctor_notes: notes,
+              status: 'pending'
+            })
+            
+            alert('Notes and prescription saved! Prescription sent to pharmacy ✅')
+          } else {
+            alert('Notes and prescription saved! (No pharmacy assigned to you)')
+          }
+        }
+      } catch (error) {
+        console.error('Error sending to pharmacy:', error)
+        alert('Notes saved, but failed to send to pharmacy')
+      }
+    } else {
+      alert('Notes saved successfully!')
+    }
+
     loadAppointments()
   }
 
@@ -245,35 +292,44 @@ export default function DoctorPage() {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold" style={{ color: '#006989' }}>My Appointments</h2>
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => setFilter('all')}
-                className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'all' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
-                style={filter === 'all' ? { backgroundColor: '#006989' } : {}}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setFilter('pending')}
-                className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'pending' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
-                style={filter === 'pending' ? { backgroundColor: '#006989' } : {}}
-              >
-                Pending
-              </button>
-              <button
-                onClick={() => setFilter('accepted')}
-                className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'accepted' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
-                style={filter === 'accepted' ? { backgroundColor: '#006989' } : {}}
-              >
-                Accepted
-              </button>
-              <button
-                onClick={() => setFilter('completed')}
-                className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'completed' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
-                style={filter === 'completed' ? { backgroundColor: '#006989' } : {}}
-              >
-                Completed
-              </button>
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                placeholder="🔍 Search patient..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="px-3 py-1.5 border border-gray-300 rounded text-xs"
+              />
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'all' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
+                  style={filter === 'all' ? { backgroundColor: '#006989' } : {}}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setFilter('pending')}
+                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'pending' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
+                  style={filter === 'pending' ? { backgroundColor: '#006989' } : {}}
+                >
+                  Pending
+                </button>
+                <button
+                  onClick={() => setFilter('accepted')}
+                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'accepted' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
+                  style={filter === 'accepted' ? { backgroundColor: '#006989' } : {}}
+                >
+                  Accepted
+                </button>
+                <button
+                  onClick={() => setFilter('completed')}
+                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'completed' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
+                  style={filter === 'completed' ? { backgroundColor: '#006989' } : {}}
+                >
+                  Completed
+                </button>
+              </div>
             </div>
           </div>
 
@@ -281,7 +337,17 @@ export default function DoctorPage() {
             <p className="text-center text-gray-500 py-8 text-xs">No appointments found</p>
           ) : (
             <div className="space-y-3">
-              {appointments.map((appointment) => (
+              {appointments
+                .filter(appointment => {
+                  if (!searchTerm) return true
+                  const search = searchTerm.toLowerCase()
+                  return (
+                    appointment.patients?.users?.name?.toLowerCase().includes(search) ||
+                    appointment.patients?.users?.email?.toLowerCase().includes(search) ||
+                    appointment.reason?.toLowerCase().includes(search)
+                  )
+                })
+                .map((appointment) => (
                 <AppointmentCard
                   key={appointment.id}
                   appointment={appointment}
