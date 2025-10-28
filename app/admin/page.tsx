@@ -200,8 +200,22 @@ function DashboardView() {
   )
 }
 
+type Doctor = {
+  id: string
+  user_id: string
+  specialization?: string
+  qualification?: string
+  experience_years?: number
+  users?: {
+    id: string
+    name: string
+    email: string
+    phone?: string
+  }
+}
+
 function DoctorsView({ currentUserId }: { currentUserId: string }) {
-  const [doctors, setDoctors] = useState<any[]>([])
+  const [doctors, setDoctors] = useState<Doctor[]>([])
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -401,8 +415,9 @@ function DoctorsView({ currentUserId }: { currentUserId: string }) {
                 <td className="px-6 py-4 whitespace-nowrap text-sm">{doctor.experience_years} years</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <button
-                    onClick={() => handleDeleteDoctor(doctor.id, doctor.users?.id)}
+                    onClick={() => handleDeleteDoctor(doctor.id, doctor.users?.id || '')}
                     className="px-3 py-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-xs font-medium flex items-center gap-1"
+                    disabled={!doctor.users?.id}
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -419,8 +434,23 @@ function DoctorsView({ currentUserId }: { currentUserId: string }) {
   )
 }
 
+type Patient = {
+  id: string
+  user_id: string
+  date_of_birth?: string
+  gender?: string
+  address?: string
+  medical_history?: string
+  users?: {
+    id: string
+    name: string
+    email: string
+    phone?: string
+  }
+}
+
 function PatientsView({ currentUserId }: { currentUserId: string }) {
-  const [patients, setPatients] = useState<any[]>([])
+  const [patients, setPatients] = useState<Patient[]>([])
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -635,8 +665,9 @@ function PatientsView({ currentUserId }: { currentUserId: string }) {
                 <td className="px-6 py-4 whitespace-nowrap text-sm">{patient.date_of_birth}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <button
-                    onClick={() => handleDeletePatient(patient.id, patient.users?.id)}
+                    onClick={() => handleDeletePatient(patient.id, patient.users?.id || '')}
                     className="px-3 py-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-xs font-medium flex items-center gap-1"
+                    disabled={!patient.users?.id}
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -653,10 +684,35 @@ function PatientsView({ currentUserId }: { currentUserId: string }) {
   )
 }
 
+type Appointment = {
+  id: string
+  patient_id: string
+  doctor_id: string
+  appointment_date: string
+  appointment_time: string
+  reason?: string
+  status: string
+  patients?: {
+    id: string
+    users?: {
+      name: string
+      email: string
+    }
+  }
+  doctors?: {
+    id: string
+    specialization?: string
+    users?: {
+      name: string
+      email: string
+    }
+  }
+}
+
 function AppointmentsView({ currentUserId }: { currentUserId: string }) {
-  const [appointments, setAppointments] = useState<any[]>([])
-  const [doctors, setDoctors] = useState<any[]>([])
-  const [patients, setPatients] = useState<any[]>([])
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [doctors, setDoctors] = useState<Doctor[]>([])
+  const [patients, setPatients] = useState<Patient[]>([])
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     patient_id: '',
@@ -691,6 +747,48 @@ function AppointmentsView({ currentUserId }: { currentUserId: string }) {
 
     if (!error && data) {
       setAppointments(data)
+    }
+  }
+
+  const handleDeleteAppointment = async (appointmentId: string) => {
+    if (!confirm('Are you sure you want to delete this appointment?')) {
+      return
+    }
+
+    const { error } = await supabase.from('appointments').delete().eq('id', appointmentId)
+    
+    if (error) {
+      alert('Error deleting appointment')
+      return
+    }
+
+    alert('Appointment deleted successfully!')
+    loadAppointments()
+  }
+
+  const handleSendReminder = async (appointment: Appointment) => {
+    try {
+      const response = await fetch('/api/send-appointment-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientEmail: appointment.patients?.users?.email,
+          patientName: appointment.patients?.users?.name,
+          doctorName: appointment.doctors?.users?.name,
+          doctorSpecialization: appointment.doctors?.specialization,
+          appointmentDate: appointment.appointment_date,
+          appointmentTime: appointment.appointment_time,
+          reason: appointment.reason
+        })
+      })
+
+      if (response.ok) {
+        alert('Reminder sent successfully!')
+      } else {
+        alert('Failed to send reminder')
+      }
+    } catch {
+      alert('Error sending reminder')
     }
   }
 
@@ -845,25 +943,50 @@ function AppointmentsView({ currentUserId }: { currentUserId: string }) {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {appointments.map((appointment) => (
               <tr key={appointment.id}>
-                <td className="px-6 py-4 whitespace-nowrap">{appointment.patients?.users?.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{appointment.patients?.users?.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
                   {appointment.doctors?.users?.name}
                   <br />
                   <span className="text-xs text-gray-500">{appointment.doctors?.specialization}</span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">{appointment.appointment_date}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{appointment.appointment_time}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{appointment.appointment_date}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{appointment.appointment_time}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(appointment.status)}`}>
                     {appointment.status}
                   </span>
                 </td>
-                <td className="px-6 py-4">{appointment.reason}</td>
+                <td className="px-6 py-4 text-sm">{appointment.reason}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleSendReminder(appointment)}
+                      className="px-2 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-xs font-medium flex items-center gap-1"
+                      title="Send Reminder"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      Remind
+                    </button>
+                    <button
+                      onClick={() => handleDeleteAppointment(appointment.id)}
+                      className="px-2 py-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-xs font-medium flex items-center gap-1"
+                      title="Delete Appointment"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

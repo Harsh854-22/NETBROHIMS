@@ -14,11 +14,34 @@ type User = {
   phone?: string
 }
 
+type Appointment = {
+  id: string
+  patient_id: string
+  appointment_date: string
+  appointment_time: string
+  reason?: string
+  status: string
+  doctor_notes?: string
+  prescription?: string
+  completed_at?: string
+  patients?: {
+    id: string
+    users?: {
+      name: string
+      email: string
+      phone?: string
+    }
+    date_of_birth?: string
+    gender?: string
+    medical_history?: string
+  }
+}
+
 export default function DoctorPage() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [doctorId, setDoctorId] = useState<string>('')
-  const [appointments, setAppointments] = useState<any[]>([])
+  const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'completed'>('all')
 
@@ -81,10 +104,16 @@ export default function DoctorPage() {
     }
   }
 
-  const updateAppointmentStatus = async (appointmentId: string, status: string, notes?: string) => {
+  const updateAppointmentStatus = async (appointmentId: string, status: string) => {
+    const updateData: { status: string; completed_at?: string } = { status }
+    
+    if (status === 'completed') {
+      updateData.completed_at = new Date().toISOString()
+    }
+
     const { error } = await supabase
       .from('appointments')
-      .update({ status, notes })
+      .update(updateData)
       .eq('id', appointmentId)
 
     if (error) {
@@ -93,6 +122,77 @@ export default function DoctorPage() {
     }
 
     alert(`Appointment ${status} successfully!`)
+    loadAppointments()
+  }
+
+  const rescheduleAppointment = async (appointmentId: string, newDate: string, newTime: string, oldDate: string, oldTime: string) => {
+    const { error } = await supabase
+      .from('appointments')
+      .update({ 
+        appointment_date: newDate,
+        appointment_time: newTime,
+        status: 'rescheduled'
+      })
+      .eq('id', appointmentId)
+
+    if (error) {
+      alert('Error rescheduling appointment')
+      return
+    }
+
+    // Get appointment details for email
+    const { data: appointment } = await supabase
+      .from('appointments')
+      .select(`
+        *,
+        patients (users:user_id (name, email)),
+        doctors (users:user_id (name), specialization)
+      `)
+      .eq('id', appointmentId)
+      .single()
+
+    if (appointment) {
+      // Send reschedule notification email
+      try {
+        await fetch('/api/send-reschedule-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            patientEmail: appointment.patients?.users?.email,
+            patientName: appointment.patients?.users?.name,
+            doctorName: appointment.doctors?.users?.name,
+            doctorSpecialization: appointment.doctors?.specialization,
+            oldDate,
+            oldTime,
+            newDate,
+            newTime,
+            reason: appointment.reason
+          })
+        })
+      } catch (error) {
+        console.error('Error sending email:', error)
+      }
+    }
+
+    alert('Appointment rescheduled successfully!')
+    loadAppointments()
+  }
+
+  const saveNotesAndPrescription = async (appointmentId: string, notes: string, prescription: string) => {
+    const { error } = await supabase
+      .from('appointments')
+      .update({ 
+        doctor_notes: notes,
+        prescription: prescription
+      })
+      .eq('id', appointmentId)
+
+    if (error) {
+      alert('Error saving notes and prescription')
+      return
+    }
+
+    alert('Notes and prescription saved successfully!')
     loadAppointments()
   }
 
@@ -180,11 +280,14 @@ export default function DoctorPage() {
           {appointments.length === 0 ? (
             <p className="text-center text-gray-500 py-8 text-xs">No appointments found</p>
           ) : (
-            <div className="space-y-3">{appointments.map((appointment) => (
+            <div className="space-y-3">
+              {appointments.map((appointment) => (
                 <AppointmentCard
                   key={appointment.id}
                   appointment={appointment}
-                  onUpdate={updateAppointmentStatus}
+                  onUpdateStatus={updateAppointmentStatus}
+                  onReschedule={rescheduleAppointment}
+                  onSaveNotes={saveNotesAndPrescription}
                 />
               ))}
             </div>
@@ -195,114 +298,261 @@ export default function DoctorPage() {
   )
 }
 
-function AppointmentCard({ appointment, onUpdate }: { appointment: any; onUpdate: (id: string, status: string, notes?: string) => void }) {
+function AppointmentCard({ 
+  appointment, 
+  onUpdateStatus, 
+  onReschedule,
+  onSaveNotes
+}: { 
+  appointment: Appointment
+  onUpdateStatus: (id: string, status: string) => void
+  onReschedule: (id: string, newDate: string, newTime: string, oldDate: string, oldTime: string) => void
+  onSaveNotes: (id: string, notes: string, prescription: string) => void
+}) {
   const [showDetails, setShowDetails] = useState(false)
-  const [notes, setNotes] = useState(appointment.notes || '')
+  const [showNotesForm, setShowNotesForm] = useState(false)
+  const [notes, setNotes] = useState(appointment.doctor_notes || '')
+  const [prescription, setPrescription] = useState(appointment.prescription || '')
+  const [showRescheduleForm, setShowRescheduleForm] = useState(false)
+  const [newDate, setNewDate] = useState(appointment.appointment_date)
+  const [newTime, setNewTime] = useState(appointment.appointment_time)
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300'
       case 'accepted': return 'bg-green-100 text-green-800 border-green-300'
       case 'rejected': return 'bg-red-100 text-red-800 border-red-300'
+      case 'rescheduled': return 'bg-blue-100 text-blue-800 border-blue-300'
       case 'completed': return 'bg-gray-100 text-gray-800 border-gray-300'
       default: return 'bg-gray-100 text-gray-800 border-gray-300'
     }
   }
 
+  const handleSaveNotes = () => {
+    if (!notes.trim() && !prescription.trim()) {
+      alert('Please add notes or prescription before saving')
+      return
+    }
+    onSaveNotes(appointment.id, notes, prescription)
+    setShowNotesForm(false)
+  }
+
+  const handleReschedule = () => {
+    if (!newDate || !newTime) {
+      alert('Please select both date and time')
+      return
+    }
+    onReschedule(appointment.id, newDate, newTime, appointment.appointment_date, appointment.appointment_time)
+    setShowRescheduleForm(false)
+  }
+
   return (
     <div className={`border-2 rounded-lg p-4 ${getStatusColor(appointment.status)}`}>
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start gap-4">
         <div className="flex-1">
-          <div className="flex items-center gap-4 mb-2">
-            <h3 className="text-lg font-semibold">{appointment.patients?.users?.name}</h3>
-            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-white">
-              {appointment.status.toUpperCase()}
+          {/* Patient Name and Status */}
+          <div className="flex items-center gap-3 mb-3">
+            <h3 className="text-base font-bold">{appointment.patients?.users?.name}</h3>
+            <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-white uppercase">
+              {appointment.status}
             </span>
           </div>
           
-          <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+          {/* Appointment Details */}
+          <div className="grid grid-cols-2 gap-3 text-xs mb-3">
             <div>
-              <p className="text-gray-600">📅 Date: <span className="font-medium">{appointment.appointment_date}</span></p>
-              <p className="text-gray-600">🕐 Time: <span className="font-medium">{appointment.appointment_time}</span></p>
+              <p className="text-gray-700">📅 <span className="font-semibold">Date:</span> {appointment.appointment_date}</p>
+              <p className="text-gray-700">🕐 <span className="font-semibold">Time:</span> {appointment.appointment_time}</p>
             </div>
             <div>
-              <p className="text-gray-600">📧 Email: <span className="font-medium">{appointment.patients?.users?.email}</span></p>
-              <p className="text-gray-600">📞 Phone: <span className="font-medium">{appointment.patients?.users?.phone || 'N/A'}</span></p>
+              <p className="text-gray-700">📧 {appointment.patients?.users?.email}</p>
+              <p className="text-gray-700">📞 {appointment.patients?.users?.phone || 'N/A'}</p>
             </div>
           </div>
 
           {appointment.reason && (
-            <p className="text-sm mb-2"><strong>Reason:</strong> {appointment.reason}</p>
+            <p className="text-xs mb-2 bg-white/50 p-2 rounded"><strong>Reason:</strong> {appointment.reason}</p>
           )}
 
+          {/* Patient Details Toggle */}
           <button
             onClick={() => setShowDetails(!showDetails)}
-            className="text-sm text-blue-600 hover:underline mb-2"
+            className="text-xs font-medium hover:underline mb-2"
+            style={{ color: '#006989' }}
           >
-            {showDetails ? '▼ Hide Details' : '▶ Show Patient Details'}
+            {showDetails ? '▼ Hide Patient Details' : '▶ Show Patient Details'}
           </button>
 
           {showDetails && (
-            <div className="mt-3 p-3 bg-white rounded border">
-              <h4 className="font-semibold mb-2">Patient Information</h4>
-              <p className="text-sm"><strong>Gender:</strong> {appointment.patients?.gender || 'N/A'}</p>
-              <p className="text-sm"><strong>Date of Birth:</strong> {appointment.patients?.date_of_birth || 'N/A'}</p>
+            <div className="mt-2 p-3 bg-white rounded border text-xs">
+              <h4 className="font-bold mb-2">Patient Information</h4>
+              <p><strong>Gender:</strong> {appointment.patients?.gender || 'N/A'}</p>
+              <p><strong>Date of Birth:</strong> {appointment.patients?.date_of_birth || 'N/A'}</p>
               {appointment.patients?.medical_history && (
-                <p className="text-sm mt-2"><strong>Medical History:</strong> {appointment.patients.medical_history}</p>
+                <p className="mt-2"><strong>Medical History:</strong> {appointment.patients.medical_history}</p>
               )}
             </div>
           )}
+
+          {/* Saved Notes and Prescription */}
+          {(appointment.doctor_notes || appointment.prescription) && (
+            <div className="mt-3 p-3 bg-white rounded border text-xs space-y-2">
+              {appointment.doctor_notes && (
+                <div>
+                  <strong className="text-blue-700">📝 Doctor Notes:</strong>
+                  <p className="mt-1 text-gray-700">{appointment.doctor_notes}</p>
+                </div>
+              )}
+              {appointment.prescription && (
+                <div>
+                  <strong className="text-green-700">💊 Prescription:</strong>
+                  <p className="mt-1 text-gray-700">{appointment.prescription}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {appointment.completed_at && (
+            <p className="mt-2 text-xs text-gray-600">✓ Completed on: {new Date(appointment.completed_at).toLocaleString()}</p>
+          )}
         </div>
 
-        <div className="flex flex-col gap-1.5 ml-3">
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-1.5">
           {appointment.status === 'pending' && (
             <>
               <button
-                onClick={() => onUpdate(appointment.id, 'accepted')}
-                className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
+                onClick={() => onUpdateStatus(appointment.id, 'accepted')}
+                className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-medium whitespace-nowrap"
               >
                 ✓ Accept
               </button>
               <button
                 onClick={() => {
-                  const reason = prompt('Reason for rejection (optional):')
-                  onUpdate(appointment.id, 'rejected', reason || undefined)
+                  if (confirm('Are you sure you want to reject this appointment?')) {
+                    onUpdateStatus(appointment.id, 'rejected')
+                  }
                 }}
-                className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
+                className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-medium whitespace-nowrap"
               >
                 ✗ Reject
               </button>
               <button
-                onClick={() => {
-                  const newDate = prompt('Enter new date (YYYY-MM-DD):')
-                  const newTime = prompt('Enter new time (HH:MM):')
-                  if (newDate && newTime) {
-                    onUpdate(appointment.id, 'rescheduled', `Rescheduled to ${newDate} at ${newTime}`)
-                  }
-                }}
-                className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+                onClick={() => setShowRescheduleForm(!showRescheduleForm)}
+                className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium whitespace-nowrap"
               >
                 📅 Reschedule
               </button>
             </>
           )}
-          {appointment.status === 'accepted' && (
-            <button
-              onClick={() => {
-                const completionNotes = prompt('Add completion notes (optional):')
-                onUpdate(appointment.id, 'completed', completionNotes || undefined)
-              }}
-              className="px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 text-xs"
+          
+          {(appointment.status === 'accepted' || appointment.status === 'rescheduled') && (
+            <>
+              <button
+                onClick={() => setShowNotesForm(!showNotesForm)}
+                className="px-3 py-1.5 text-white rounded hover:bg-opacity-90 text-xs font-medium whitespace-nowrap"
+                style={{ backgroundColor: '#006989' }}
               >
-              ✓ Mark Complete
-            </button>
+                📝 {appointment.doctor_notes || appointment.prescription ? 'Edit Notes' : 'Add Notes'}
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm('Mark this appointment as completed?')) {
+                    onUpdateStatus(appointment.id, 'completed')
+                  }
+                }}
+                className="px-3 py-1.5 bg-gray-700 text-white rounded hover:bg-gray-800 text-xs font-medium whitespace-nowrap"
+              >
+                ✓ Complete
+              </button>
+            </>
           )}
         </div>
       </div>
 
-      {appointment.notes && (
-        <div className="mt-3 p-2 bg-white rounded text-sm">
-          <strong>Notes:</strong> {appointment.notes}
+      {/* Reschedule Form */}
+      {showRescheduleForm && (
+        <div className="mt-4 p-4 bg-white rounded-lg border-2 border-blue-300">
+          <h4 className="font-bold text-sm mb-3" style={{ color: '#006989' }}>Reschedule Appointment</h4>
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label className="block text-xs font-medium mb-1">New Date</label>
+              <input
+                type="date"
+                value={newDate}
+                onChange={(e) => setNewDate(e.target.value)}
+                className="w-full px-2 py-1.5 border rounded text-xs"
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1">New Time</label>
+              <input
+                type="time"
+                value={newTime}
+                onChange={(e) => setNewTime(e.target.value)}
+                className="w-full px-2 py-1.5 border rounded text-xs"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleReschedule}
+              className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium"
+            >
+              Save Reschedule
+            </button>
+            <button
+              onClick={() => setShowRescheduleForm(false)}
+              className="px-3 py-1.5 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-xs font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Notes and Prescription Form */}
+      {showNotesForm && (
+        <div className="mt-4 p-4 bg-white rounded-lg border-2" style={{ borderColor: '#006989' }}>
+          <h4 className="font-bold text-sm mb-3" style={{ color: '#006989' }}>Add Notes & Prescription</h4>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium mb-1">Doctor Notes</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Enter your observations, diagnosis, or recommendations..."
+                className="w-full px-3 py-2 border rounded text-xs"
+                rows={4}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1">Prescription</label>
+              <textarea
+                value={prescription}
+                onChange={(e) => setPrescription(e.target.value)}
+                placeholder="Enter medications, dosage, and instructions..."
+                className="w-full px-3 py-2 border rounded text-xs"
+                rows={4}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={handleSaveNotes}
+              className="px-3 py-1.5 text-white rounded hover:bg-opacity-90 text-xs font-medium"
+              style={{ backgroundColor: '#006989' }}
+            >
+              💾 Save Notes
+            </button>
+            <button
+              onClick={() => setShowNotesForm(false)}
+              className="px-3 py-1.5 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-xs font-medium"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </div>

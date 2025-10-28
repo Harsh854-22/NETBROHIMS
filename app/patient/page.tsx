@@ -13,11 +13,28 @@ type User = {
   phone?: string
 }
 
+type Appointment = {
+  id: string
+  appointment_date: string
+  appointment_time: string
+  reason: string
+  status: string
+  notes?: string
+  doctors?: {
+    specialization?: string
+    users?: {
+      name: string
+      email: string
+      phone?: string
+    }
+  }
+}
+
 export default function PatientPage() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [patientId, setPatientId] = useState<string>('')
-  const [appointments, setAppointments] = useState<any[]>([])
+  const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -133,7 +150,7 @@ export default function PatientPage() {
 
           {appointments.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-2 text-xs">You don't have any appointments yet.</p>
+              <p className="text-gray-500 mb-2 text-xs">You don&apos;t have any appointments yet.</p>
               <p className="text-[10px] text-gray-400">Please contact the hospital admin to schedule an appointment.</p>
             </div>
           ) : (
@@ -166,7 +183,7 @@ export default function PatientPage() {
 
                       {appointment.notes && (
                         <div className="mt-3 p-3 bg-white rounded border">
-                          <p className="text-sm"><strong>Doctor's Notes:</strong> {appointment.notes}</p>
+                          <p className="text-sm"><strong>Doctor&apos;s Notes:</strong> {appointment.notes}</p>
                         </div>
                       )}
 
