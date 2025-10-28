@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser, logout } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 type User = {
   id: string
@@ -137,10 +138,10 @@ export default function PharmacistPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#EAEBED' }}>
+      <div className="flex items-center justify-center min-h-screen bg-[var(--background)]">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-current border-r-transparent" style={{ color: '#006989' }}></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-[var(--primary)] border-r-transparent opacity-75"></div>
+          <p className="mt-4 text-[var(--muted-foreground)] font-medium">Loading...</p>
         </div>
       </div>
     )
@@ -148,13 +149,18 @@ export default function PharmacistPage() {
 
   if (!pharmacyShopId) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#EAEBED' }}>
-        <div className="text-center bg-white p-8 rounded-lg shadow">
-          <p className="text-red-600 font-semibold">You are not assigned to any pharmacy shop!</p>
-          <p className="text-sm text-gray-600 mt-2">Please contact the administrator.</p>
+      <div className="flex items-center justify-center min-h-screen bg-[var(--background)]">
+        <div className="text-center bg-[var(--card)] border-2 border-[var(--border)] p-10 rounded-2xl shadow-xl max-w-md animate-scaleIn">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <p className="text-red-600 font-bold text-lg mb-2">Not Assigned!</p>
+          <p className="text-sm text-[var(--muted-foreground)] mb-6">You are not assigned to any pharmacy shop. Please contact the administrator.</p>
           <button
             onClick={handleLogout}
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-semibold"
           >
             Logout
           </button>
@@ -164,26 +170,36 @@ export default function PharmacistPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#EAEBED' }}>
+    <div className="min-h-screen bg-[var(--background)] relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 -left-4 w-72 h-72 bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] rounded-full mix-blend-multiply dark:mix-blend-normal filter blur-3xl opacity-10 animate-pulse"></div>
+        <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-[var(--gradient-to)] via-[var(--gradient-via)] to-[var(--gradient-from)] rounded-full mix-blend-multiply dark:mix-blend-normal filter blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '1s' }}></div>
+      </div>
+
       {/* Header */}
-      <header className="bg-white shadow-md">
+      <header className="bg-[var(--card)] border-b-2 border-[var(--border)] shadow-lg relative z-10 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#006989' }}>
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] shadow-md hover-lift">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
               </svg>
             </div>
-            <h1 className="text-xl font-bold" style={{ color: '#006989' }}>Pharmacist Dashboard</h1>
+            <div>
+              <h1 className="text-xl font-bold text-[var(--foreground)] bg-gradient-to-r from-[var(--gradient-from)] to-[var(--gradient-to)] bg-clip-text text-transparent">Pharmacist Dashboard</h1>
+              <p className="text-xs text-[var(--muted-foreground)]">Manage prescriptions</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <div className="text-right">
-              <p className="text-xs font-medium text-gray-700">{currentUser?.name}</p>
-              <p className="text-[10px] text-gray-500">Pharmacist</p>
+              <p className="text-sm font-semibold text-[var(--foreground)]">{currentUser?.name}</p>
+              <p className="text-xs text-[var(--muted-foreground)]">Pharmacist</p>
             </div>
             <button
               onClick={handleLogout}
-              className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium text-xs shadow-sm"
+              className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium text-sm shadow-md"
             >
               Logout
             </button>
@@ -192,29 +208,38 @@ export default function PharmacistPage() {
       </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold" style={{ color: '#006989' }}>Prescription Queue</h2>
-            <div className="flex gap-1.5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-8 relative z-10">
+        <div className="bg-[var(--card)] border-2 border-[var(--border)] rounded-2xl shadow-xl p-6 backdrop-blur-sm animate-fadeIn hover-lift">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-[var(--gradient-from)] to-[var(--gradient-to)] bg-clip-text text-transparent">Prescription Queue</h2>
+            <div className="flex gap-2">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'all' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
-                style={filter === 'all' ? { backgroundColor: '#006989' } : {}}
+                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
+                  filter === 'all' 
+                    ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md' 
+                    : 'bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]'
+                }`}
               >
                 All
               </button>
               <button
                 onClick={() => setFilter('pending')}
-                className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'pending' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
-                style={filter === 'pending' ? { backgroundColor: '#006989' } : {}}
+                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
+                  filter === 'pending' 
+                    ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md' 
+                    : 'bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]'
+                }`}
               >
                 Pending
               </button>
               <button
                 onClick={() => setFilter('dispensed')}
-                className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'dispensed' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
-                style={filter === 'dispensed' ? { backgroundColor: '#006989' } : {}}
+                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
+                  filter === 'dispensed' 
+                    ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md' 
+                    : 'bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]'
+                }`}
               >
                 Dispensed
               </button>
@@ -222,7 +247,14 @@ export default function PharmacistPage() {
           </div>
 
           {prescriptions.length === 0 ? (
-            <p className="text-center text-gray-500 py-8 text-xs">No prescriptions found</p>
+            <div className="text-center py-16">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--muted)] mb-4">
+                <svg className="w-8 h-8 text-[var(--muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <p className="text-[var(--muted-foreground)] font-medium">No prescriptions found</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {prescriptions.map((rx) => (

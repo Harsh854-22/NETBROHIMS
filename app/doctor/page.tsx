@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getCurrentUser, logout } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 type User = {
   id: string
@@ -250,36 +251,46 @@ export default function DoctorPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#EAEBED' }}>
+      <div className="flex items-center justify-center min-h-screen bg-[var(--background)]">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-current border-r-transparent" style={{ color: '#006989' }}></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-[var(--primary)] border-r-transparent opacity-75"></div>
+          <p className="mt-4 text-[var(--muted-foreground)] font-medium">Loading...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#EAEBED' }}>
+    <div className="min-h-screen bg-[var(--background)] relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 -left-4 w-72 h-72 bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] rounded-full mix-blend-multiply dark:mix-blend-normal filter blur-3xl opacity-10 animate-pulse"></div>
+        <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-[var(--gradient-to)] via-[var(--gradient-via)] to-[var(--gradient-from)] rounded-full mix-blend-multiply dark:mix-blend-normal filter blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '1s' }}></div>
+      </div>
+
       {/* Header */}
-      <header className="bg-white shadow-md">
+      <header className="bg-[var(--card)] border-b-2 border-[var(--border)] shadow-lg relative z-10 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#006989' }}>
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] shadow-md hover-lift">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h1 className="text-xl font-bold" style={{ color: '#006989' }}>Doctor Dashboard</h1>
+            <div>
+              <h1 className="text-xl font-bold text-[var(--foreground)] bg-gradient-to-r from-[var(--gradient-from)] to-[var(--gradient-to)] bg-clip-text text-transparent">Doctor Dashboard</h1>
+              <p className="text-xs text-[var(--muted-foreground)]">Manage your appointments</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <div className="text-right">
-              <p className="text-xs font-medium text-gray-700">Dr. {currentUser?.name}</p>
-              <p className="text-[10px] text-gray-500">Physician</p>
+              <p className="text-sm font-semibold text-[var(--foreground)]">Dr. {currentUser?.name}</p>
+              <p className="text-xs text-[var(--muted-foreground)]">Physician</p>
             </div>
             <button
               onClick={handleLogout}
-              className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium text-xs shadow-sm"
+              className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium text-sm shadow-md"
             >
               Logout
             </button>
@@ -288,44 +299,61 @@ export default function DoctorPage() {
       </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold" style={{ color: '#006989' }}>My Appointments</h2>
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                placeholder="🔍 Search patient..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="px-3 py-1.5 border border-gray-300 rounded text-xs"
-              />
-              <div className="flex gap-1.5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-8 relative z-10">
+        <div className="bg-[var(--card)] border-2 border-[var(--border)] rounded-2xl shadow-xl p-6 backdrop-blur-sm animate-fadeIn hover-lift">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-[var(--gradient-from)] to-[var(--gradient-to)] bg-clip-text text-transparent">My Appointments</h2>
+            <div className="flex gap-3 items-center">
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search patient..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 bg-[var(--input)] border-2 border-[var(--border)] rounded-xl text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
+                />
+              </div>
+              <div className="flex gap-2">
                 <button
                   onClick={() => setFilter('all')}
-                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'all' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
-                  style={filter === 'all' ? { backgroundColor: '#006989' } : {}}
+                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
+                    filter === 'all' 
+                      ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md' 
+                      : 'bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]'
+                  }`}
                 >
                   All
                 </button>
                 <button
                   onClick={() => setFilter('pending')}
-                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'pending' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
-                  style={filter === 'pending' ? { backgroundColor: '#006989' } : {}}
+                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
+                    filter === 'pending' 
+                      ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md' 
+                      : 'bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]'
+                  }`}
                 >
                   Pending
                 </button>
                 <button
                   onClick={() => setFilter('accepted')}
-                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'accepted' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
-                  style={filter === 'accepted' ? { backgroundColor: '#006989' } : {}}
+                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
+                    filter === 'accepted' 
+                      ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md' 
+                      : 'bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]'
+                  }`}
                 >
                   Accepted
                 </button>
                 <button
                   onClick={() => setFilter('completed')}
-                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'completed' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
-                  style={filter === 'completed' ? { backgroundColor: '#006989' } : {}}
+                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
+                    filter === 'completed' 
+                      ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md' 
+                      : 'bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]'
+                  }`}
                 >
                   Completed
                 </button>
@@ -334,7 +362,14 @@ export default function DoctorPage() {
           </div>
 
           {appointments.length === 0 ? (
-            <p className="text-center text-gray-500 py-8 text-xs">No appointments found</p>
+            <div className="text-center py-16">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--muted)] mb-4">
+                <svg className="w-8 h-8 text-[var(--muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <p className="text-[var(--muted-foreground)] font-medium">No appointments found</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {appointments

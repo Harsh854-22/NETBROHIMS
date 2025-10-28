@@ -861,17 +861,26 @@ function AppointmentsView({ searchTerm, setSearchTerm }: {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Get current admin user ID
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
+      alert('Error: User not logged in')
+      return
+    }
+    
     const { error } = await supabase.from('appointments').insert({
       patient_id: formData.patient_id,
       doctor_id: formData.doctor_id,
       appointment_date: formData.appointment_date,
       appointment_time: formData.appointment_time,
       reason: formData.reason,
-      status: 'pending'
+      status: 'pending',
+      created_by: currentUser.id
     })
 
     if (error) {
-      alert('Error creating appointment')
+      console.error('Error creating appointment:', error)
+      alert('Error creating appointment: ' + (error.message || 'Unknown error'))
       return
     }
 
