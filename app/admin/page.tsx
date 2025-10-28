@@ -230,6 +230,34 @@ function DoctorsView({ currentUserId }: { currentUserId: string }) {
     }
   }
 
+  const handleDeleteDoctor = async (doctorId: string, userId: string) => {
+    if (!confirm('Are you sure you want to delete this doctor? This will also delete all associated appointments.')) {
+      return
+    }
+
+    // Delete appointments first (due to foreign key constraint)
+    await supabase.from('appointments').delete().eq('doctor_id', doctorId)
+    
+    // Delete doctor profile
+    const { error: doctorError } = await supabase.from('doctors').delete().eq('id', doctorId)
+    
+    if (doctorError) {
+      alert('Error deleting doctor profile')
+      return
+    }
+
+    // Delete user account
+    const { error: userError } = await supabase.from('users').delete().eq('id', userId)
+    
+    if (userError) {
+      alert('Error deleting user account')
+      return
+    }
+
+    alert('Doctor deleted successfully!')
+    loadDoctors()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -360,16 +388,28 @@ function DoctorsView({ currentUserId }: { currentUserId: string }) {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specialization</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Experience</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {doctors.map((doctor) => (
               <tr key={doctor.id}>
-                <td className="px-6 py-4 whitespace-nowrap">{doctor.users?.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{doctor.users?.email}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{doctor.users?.phone}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{doctor.specialization}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{doctor.experience_years} years</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{doctor.users?.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{doctor.users?.email}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{doctor.users?.phone}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{doctor.specialization}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{doctor.experience_years} years</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <button
+                    onClick={() => handleDeleteDoctor(doctor.id, doctor.users?.id)}
+                    className="px-3 py-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-xs font-medium flex items-center gap-1"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -408,6 +448,34 @@ function PatientsView({ currentUserId }: { currentUserId: string }) {
     if (!error && data) {
       setPatients(data)
     }
+  }
+
+  const handleDeletePatient = async (patientId: string, userId: string) => {
+    if (!confirm('Are you sure you want to delete this patient? This will also delete all associated appointments and medical records.')) {
+      return
+    }
+
+    // Delete appointments first (due to foreign key constraint)
+    await supabase.from('appointments').delete().eq('patient_id', patientId)
+    
+    // Delete patient profile
+    const { error: patientError } = await supabase.from('patients').delete().eq('id', patientId)
+    
+    if (patientError) {
+      alert('Error deleting patient profile')
+      return
+    }
+
+    // Delete user account
+    const { error: userError } = await supabase.from('users').delete().eq('id', userId)
+    
+    if (userError) {
+      alert('Error deleting user account')
+      return
+    }
+
+    alert('Patient deleted successfully!')
+    loadPatients()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -554,16 +622,28 @@ function PatientsView({ currentUserId }: { currentUserId: string }) {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gender</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date of Birth</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {patients.map((patient) => (
               <tr key={patient.id}>
-                <td className="px-6 py-4 whitespace-nowrap">{patient.users?.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{patient.users?.email}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{patient.users?.phone}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{patient.gender}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{patient.date_of_birth}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{patient.users?.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{patient.users?.email}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{patient.users?.phone}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{patient.gender}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{patient.date_of_birth}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <button
+                    onClick={() => handleDeletePatient(patient.id, patient.users?.id)}
+                    className="px-3 py-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-xs font-medium flex items-center gap-1"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
