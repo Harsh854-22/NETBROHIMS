@@ -39,20 +39,37 @@ export default function AdminPage() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+    return (
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#EAEBED' }}>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-current border-r-transparent" style={{ color: '#006989' }}></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#EAEBED' }}>
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Welcome, {currentUser?.name}</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#006989' }}>
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-bold" style={{ color: '#006989' }}>Admin Dashboard</h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-xs font-medium text-gray-700">{currentUser?.name}</p>
+              <p className="text-[10px] text-gray-500">{currentUser?.role}</p>
+            </div>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium text-xs shadow-sm"
             >
               Logout
             </button>
@@ -61,48 +78,52 @@ export default function AdminPage() {
       </header>
 
       {/* Navigation Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div className="bg-white rounded-lg shadow-sm p-1">
+          <nav className="flex space-x-1">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all ${
                 activeTab === 'dashboard'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-50'
               }`}
+              style={activeTab === 'dashboard' ? { backgroundColor: '#006989' } : {}}
             >
-              Dashboard
+              📊 Dashboard
             </button>
             <button
               onClick={() => setActiveTab('doctors')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all ${
                 activeTab === 'doctors'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-50'
               }`}
+              style={activeTab === 'doctors' ? { backgroundColor: '#006989' } : {}}
             >
-              Doctors
+              👨‍⚕️ Doctors
             </button>
             <button
               onClick={() => setActiveTab('patients')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all ${
                 activeTab === 'patients'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-50'
               }`}
+              style={activeTab === 'patients' ? { backgroundColor: '#006989' } : {}}
             >
-              Patients
+              🧑‍🤝‍🧑 Patients
             </button>
             <button
               onClick={() => setActiveTab('appointments')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all ${
                 activeTab === 'appointments'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-50'
               }`}
+              style={activeTab === 'appointments' ? { backgroundColor: '#006989' } : {}}
             >
-              Appointments
+              📅 Appointments
             </button>
           </nav>
         </div>
@@ -141,18 +162,39 @@ function DashboardView() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-semibold text-gray-700">Total Doctors</h3>
-        <p className="text-3xl font-bold text-blue-600 mt-2">{stats.doctors}</p>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow border-l-4" style={{ borderLeftColor: '#006989' }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Doctors</p>
+            <p className="text-2xl font-bold mt-1" style={{ color: '#006989' }}>{stats.doctors}</p>
+          </div>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EAEBED' }}>
+            <span className="text-2xl">👨‍⚕️</span>
+          </div>
+        </div>
       </div>
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-semibold text-gray-700">Total Patients</h3>
-        <p className="text-3xl font-bold text-green-600 mt-2">{stats.patients}</p>
+      <div className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow border-l-4 border-green-500">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Patients</p>
+            <p className="text-2xl font-bold text-green-600 mt-1">{stats.patients}</p>
+          </div>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-green-100">
+            <span className="text-2xl">🧑‍🤝‍🧑</span>
+          </div>
+        </div>
       </div>
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-semibold text-gray-700">Total Appointments</h3>
-        <p className="text-3xl font-bold text-purple-600 mt-2">{stats.appointments}</p>
+      <div className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow border-l-4 border-purple-500">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Appointments</p>
+            <p className="text-2xl font-bold text-purple-600 mt-1">{stats.appointments}</p>
+          </div>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-100">
+            <span className="text-2xl">📅</span>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -219,90 +261,90 @@ function DoctorsView({ currentUserId }: { currentUserId: string }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold">Doctors Management</h2>
+    <div className="bg-white rounded-lg shadow p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-bold">Doctors Management</h2>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
         >
           {showForm ? 'Cancel' : 'Add Doctor'}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-6 p-4 border rounded-lg space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="mb-4 p-3 border rounded-lg space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Name</label>
+              <label className="block text-xs font-medium text-gray-700">Name</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <label className="block text-xs font-medium text-gray-700">Email</label>
               <input
                 type="email"
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Phone</label>
+              <label className="block text-xs font-medium text-gray-700">Phone</label>
               <input
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label className="block text-xs font-medium text-gray-700">Password</label>
               <input
                 type="password"
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Specialization</label>
+              <label className="block text-xs font-medium text-gray-700">Specialization</label>
               <input
                 type="text"
                 value={formData.specialization}
                 onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Qualification</label>
+              <label className="block text-xs font-medium text-gray-700">Qualification</label>
               <input
                 type="text"
                 value={formData.qualification}
                 onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Years of Experience</label>
+              <label className="block text-xs font-medium text-gray-700">Years of Experience</label>
               <input
                 type="number"
                 value={formData.experience_years}
                 onChange={(e) => setFormData({ ...formData, experience_years: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
           >
             Create Doctor
           </button>
@@ -400,74 +442,74 @@ function PatientsView({ currentUserId }: { currentUserId: string }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold">Patients Management</h2>
+    <div className="bg-white rounded-lg shadow p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-bold">Patients Management</h2>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
         >
           {showForm ? 'Cancel' : 'Add Patient'}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-6 p-4 border rounded-lg space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="mb-4 p-3 border rounded-lg space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Name</label>
+              <label className="block text-xs font-medium text-gray-700">Name</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <label className="block text-xs font-medium text-gray-700">Email</label>
               <input
                 type="email"
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Phone</label>
+              <label className="block text-xs font-medium text-gray-700">Phone</label>
               <input
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label className="block text-xs font-medium text-gray-700">Password</label>
               <input
                 type="password"
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+              <label className="block text-xs font-medium text-gray-700">Date of Birth</label>
               <input
                 type="date"
                 value={formData.date_of_birth}
                 onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Gender</label>
+              <label className="block text-xs font-medium text-gray-700">Gender</label>
               <select
                 value={formData.gender}
                 onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               >
                 <option value="">Select Gender</option>
                 <option value="male">Male</option>
@@ -476,27 +518,27 @@ function PatientsView({ currentUserId }: { currentUserId: string }) {
               </select>
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Address</label>
+              <label className="block text-xs font-medium text-gray-700">Address</label>
               <textarea
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
                 rows={2}
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Medical History</label>
+              <label className="block text-xs font-medium text-gray-700">Medical History</label>
               <textarea
                 value={formData.medical_history}
                 onChange={(e) => setFormData({ ...formData, medical_history: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
                 rows={3}
               />
             </div>
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
           >
             Create Patient
           </button>
@@ -628,27 +670,27 @@ function AppointmentsView({ currentUserId }: { currentUserId: string }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold">Appointments Management</h2>
+    <div className="bg-white rounded-lg shadow p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-bold">Appointments Management</h2>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
         >
           {showForm ? 'Cancel' : 'Schedule Appointment'}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-6 p-4 border rounded-lg space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="mb-4 p-3 border rounded-lg space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Patient</label>
+              <label className="block text-xs font-medium text-gray-700">Patient</label>
               <select
                 required
                 value={formData.patient_id}
                 onChange={(e) => setFormData({ ...formData, patient_id: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               >
                 <option value="">Select Patient</option>
                 {patients.map((patient) => (
@@ -659,12 +701,12 @@ function AppointmentsView({ currentUserId }: { currentUserId: string }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Doctor</label>
+              <label className="block text-xs font-medium text-gray-700">Doctor</label>
               <select
                 required
                 value={formData.doctor_id}
                 onChange={(e) => setFormData({ ...formData, doctor_id: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               >
                 <option value="">Select Doctor</option>
                 {doctors.map((doctor) => (
@@ -675,38 +717,38 @@ function AppointmentsView({ currentUserId }: { currentUserId: string }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Date</label>
+              <label className="block text-xs font-medium text-gray-700">Date</label>
               <input
                 type="date"
                 required
                 value={formData.appointment_date}
                 onChange={(e) => setFormData({ ...formData, appointment_date: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Time</label>
+              <label className="block text-xs font-medium text-gray-700">Time</label>
               <input
                 type="time"
                 required
                 value={formData.appointment_time}
                 onChange={(e) => setFormData({ ...formData, appointment_time: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Reason for Visit</label>
+              <label className="block text-xs font-medium text-gray-700">Reason for Visit</label>
               <textarea
                 value={formData.reason}
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
                 rows={3}
               />
             </div>
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
           >
             Schedule Appointment
           </button>

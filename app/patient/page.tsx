@@ -77,7 +77,14 @@ export default function PatientPage() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+    return (
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#EAEBED' }}>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-current border-r-transparent" style={{ color: '#006989' }}></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   const getStatusColor = (status: string) => {
@@ -92,16 +99,26 @@ export default function PatientPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#EAEBED' }}>
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Patient Portal</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Welcome, {currentUser?.name}</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#006989' }}>
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-bold" style={{ color: '#006989' }}>Patient Portal</h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-xs font-medium text-gray-700">{currentUser?.name}</p>
+              <p className="text-[10px] text-gray-500">Patient</p>
+            </div>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium text-xs shadow-sm"
             >
               Logout
             </button>
@@ -110,24 +127,24 @@ export default function PatientPage() {
       </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-6">My Appointments</h2>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-bold mb-4" style={{ color: '#006989' }}>My Appointments</h2>
 
           {appointments.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">You don't have any appointments yet.</p>
-              <p className="text-sm text-gray-400">Please contact the hospital admin to schedule an appointment.</p>
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-2 text-xs">You don't have any appointments yet.</p>
+              <p className="text-[10px] text-gray-400">Please contact the hospital admin to schedule an appointment.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {appointments.map((appointment) => (
-                <div key={appointment.id} className={`border-2 rounded-lg p-4 ${getStatusColor(appointment.status)}`}>
+                <div key={appointment.id} className={`border-2 rounded-lg p-3 ${getStatusColor(appointment.status)}`}>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-3">
-                        <h3 className="text-lg font-semibold">Dr. {appointment.doctors?.users?.name}</h3>
-                        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-white">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-sm font-semibold">Dr. {appointment.doctors?.users?.name}</h3>
+                        <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-white">
                           {appointment.status.toUpperCase()}
                         </span>
                       </div>

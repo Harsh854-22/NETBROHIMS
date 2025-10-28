@@ -102,20 +102,37 @@ export default function DoctorPage() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+    return (
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#EAEBED' }}>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-current border-r-transparent" style={{ color: '#006989' }}></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#EAEBED' }}>
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Doctor Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Welcome, Dr. {currentUser?.name}</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#006989' }}>
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-bold" style={{ color: '#006989' }}>Doctor Dashboard</h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-xs font-medium text-gray-700">Dr. {currentUser?.name}</p>
+              <p className="text-[10px] text-gray-500">Physician</p>
+            </div>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium text-xs shadow-sm"
             >
               Logout
             </button>
@@ -124,32 +141,36 @@ export default function DoctorPage() {
       </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold">My Appointments</h2>
-            <div className="flex gap-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold" style={{ color: '#006989' }}>My Appointments</h2>
+            <div className="flex gap-1.5">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'all' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
+                style={filter === 'all' ? { backgroundColor: '#006989' } : {}}
               >
                 All
               </button>
               <button
                 onClick={() => setFilter('pending')}
-                className={`px-4 py-2 rounded ${filter === 'pending' ? 'bg-yellow-600 text-white' : 'bg-gray-200'}`}
+                className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'pending' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
+                style={filter === 'pending' ? { backgroundColor: '#006989' } : {}}
               >
                 Pending
               </button>
               <button
                 onClick={() => setFilter('accepted')}
-                className={`px-4 py-2 rounded ${filter === 'accepted' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+                className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'accepted' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
+                style={filter === 'accepted' ? { backgroundColor: '#006989' } : {}}
               >
                 Accepted
               </button>
               <button
                 onClick={() => setFilter('completed')}
-                className={`px-4 py-2 rounded ${filter === 'completed' ? 'bg-gray-600 text-white' : 'bg-gray-200'}`}
+                className={`px-3 py-1.5 rounded-md font-medium text-xs transition-all ${filter === 'completed' ? 'text-white shadow-sm' : 'bg-gray-200 hover:bg-gray-300'}`}
+                style={filter === 'completed' ? { backgroundColor: '#006989' } : {}}
               >
                 Completed
               </button>
@@ -157,10 +178,9 @@ export default function DoctorPage() {
           </div>
 
           {appointments.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No appointments found</p>
+            <p className="text-center text-gray-500 py-8 text-xs">No appointments found</p>
           ) : (
-            <div className="space-y-4">
-              {appointments.map((appointment) => (
+            <div className="space-y-3">{appointments.map((appointment) => (
                 <AppointmentCard
                   key={appointment.id}
                   appointment={appointment}
@@ -234,12 +254,12 @@ function AppointmentCard({ appointment, onUpdate }: { appointment: any; onUpdate
           )}
         </div>
 
-        <div className="flex flex-col gap-2 ml-4">
+        <div className="flex flex-col gap-1.5 ml-3">
           {appointment.status === 'pending' && (
             <>
               <button
                 onClick={() => onUpdate(appointment.id, 'accepted')}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
               >
                 ✓ Accept
               </button>
@@ -248,7 +268,7 @@ function AppointmentCard({ appointment, onUpdate }: { appointment: any; onUpdate
                   const reason = prompt('Reason for rejection (optional):')
                   onUpdate(appointment.id, 'rejected', reason || undefined)
                 }}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
               >
                 ✗ Reject
               </button>
@@ -260,7 +280,7 @@ function AppointmentCard({ appointment, onUpdate }: { appointment: any; onUpdate
                     onUpdate(appointment.id, 'rescheduled', `Rescheduled to ${newDate} at ${newTime}`)
                   }
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
               >
                 📅 Reschedule
               </button>
@@ -272,7 +292,7 @@ function AppointmentCard({ appointment, onUpdate }: { appointment: any; onUpdate
                 const completionNotes = prompt('Add completion notes (optional):')
                 onUpdate(appointment.id, 'completed', completionNotes || undefined)
               }}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm"
+              className="px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 text-xs"
               >
               ✓ Mark Complete
             </button>

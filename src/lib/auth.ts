@@ -100,3 +100,91 @@ export async function logout(): Promise<void> {
   if (typeof window === 'undefined') return
   localStorage.removeItem('currentUser')
 }
+
+export async function sendPasswordResetEmail(email: string): Promise<{ success: boolean; message: string }> {
+  try {
+    // Check if user exists
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, email, name')
+      .eq('email', email)
+      .single()
+
+    if (error || !user) {
+      // For security, don't reveal if email exists or not
+      return {
+        success: true,
+        message: 'If an account exists with this email, you will receive a password reset link shortly.'
+      }
+    }
+
+    // Use Supabase Auth to send password reset email
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    })
+
+    if (resetError) {
+      console.error('Password reset error:', resetError)
+      return {
+        success: false,
+        message: 'Failed to send password reset email. Please try again.'
+      }
+    }
+
+    return {
+      success: true,
+      message: 'If an account exists with this email, you will receive a password reset link shortly.'
+    }
+  } catch (error) {
+    console.error('Send password reset error:', error)
+    return {
+      success: false,
+      message: 'An error occurred. Please try again later.'
+    }
+  }
+}
+
+export async function resetPassword(newPassword: string): Promise<{ success: boolean; message: string }> {
+  try {
+    // Get current session
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      return {
+        success: false,
+        message: 'Invalid or expired reset link.'
+      }
+    }
+
+    // Hash the new password
+    const passwordHash = await bcrypt.hash(newPassword, 10)
+
+    // Update password in users table
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ password_hash: passwordHash })
+      .eq('email', user.email)
+
+    if (updateError) {
+      console.error('Password update error:', updateError)
+      return {
+        success: false,
+        message: 'Failed to update password. Please try again.'
+      }
+    }
+
+    // Sign out the user
+    await supabase.auth.signOut()
+
+    return {
+      success: true,
+      message: 'Password updated successfully. Please login with your new password.'
+    }
+  } catch (error) {
+    console.error('Reset password error:', error)
+    return {
+      success: false,
+      message: 'An error occurred. Please try again later.'
+    }
+  }
+}
