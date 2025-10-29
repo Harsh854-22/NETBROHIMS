@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getCurrentUser, logout } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { Icons } from '@/components/Icons'
 
 type User = {
   id: string
@@ -150,18 +151,17 @@ export default function PharmacistPage() {
   if (!pharmacyShopId) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[var(--background)]">
-        <div className="text-center bg-[var(--card)] border-2 border-[var(--border)] p-10 rounded-2xl shadow-xl max-w-md animate-scaleIn">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+        <div className="text-center bg-[var(--card)] border-2 border-[var(--border)] p-10 rounded-2xl shadow-xl max-w-md">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+            <Icons.warning className="w-10 h-10 text-red-600" />
           </div>
-          <p className="text-red-600 font-bold text-lg mb-2">Not Assigned!</p>
+          <p className="text-red-600 font-bold text-xl mb-2">Not Assigned!</p>
           <p className="text-sm text-[var(--muted-foreground)] mb-6">You are not assigned to any pharmacy shop. Please contact the administrator.</p>
           <button
             onClick={handleLogout}
-            className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-semibold"
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold mx-auto"
           >
+            <Icons.logout className="w-4 h-4" />
             Logout
           </button>
         </div>
@@ -181,17 +181,15 @@ export default function PharmacistPage() {
       <header className="bg-[var(--card)] border-b-2 border-[var(--border)] shadow-lg relative z-10 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] shadow-md hover-lift">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-green-500 to-emerald-600 shadow-md">
+              <Icons.pill className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-[var(--foreground)] bg-gradient-to-r from-[var(--gradient-from)] to-[var(--gradient-to)] bg-clip-text text-transparent">Pharmacist Dashboard</h1>
+              <h1 className="text-xl font-bold text-[var(--foreground)]">Pharmacist Dashboard</h1>
               <p className="text-xs text-[var(--muted-foreground)]">Manage prescriptions</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <ThemeToggle />
             <div className="text-right">
               <p className="text-sm font-semibold text-[var(--foreground)]">{currentUser?.name}</p>
@@ -199,8 +197,9 @@ export default function PharmacistPage() {
             </div>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium text-sm shadow-md"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md"
             >
+              <Icons.logout className="w-4 h-4" />
               Logout
             </button>
           </div>
@@ -209,15 +208,15 @@ export default function PharmacistPage() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-8 relative z-10">
-        <div className="bg-[var(--card)] border-2 border-[var(--border)] rounded-2xl shadow-xl p-6 backdrop-blur-sm animate-fadeIn hover-lift">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-[var(--gradient-from)] to-[var(--gradient-to)] bg-clip-text text-transparent">Prescription Queue</h2>
-            <div className="flex gap-2">
+        <div className="bg-[var(--card)] border-2 border-[var(--border)] rounded-2xl shadow-xl p-6 backdrop-blur-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h2 className="text-2xl font-bold text-[var(--foreground)]">Prescription Queue</h2>
+            <div className="flex gap-2 flex-wrap">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
+                className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
                   filter === 'all' 
-                    ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md' 
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md' 
                     : 'bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]'
                 }`}
               >
@@ -225,9 +224,9 @@ export default function PharmacistPage() {
               </button>
               <button
                 onClick={() => setFilter('pending')}
-                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
+                className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
                   filter === 'pending' 
-                    ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md' 
+                    ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white shadow-md' 
                     : 'bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]'
                 }`}
               >
@@ -235,9 +234,9 @@ export default function PharmacistPage() {
               </button>
               <button
                 onClick={() => setFilter('dispensed')}
-                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
+                className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm hover:scale-105 ${
                   filter === 'dispensed' 
-                    ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md' 
+                    ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md' 
                     : 'bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]'
                 }`}
               >
@@ -248,87 +247,94 @@ export default function PharmacistPage() {
 
           {prescriptions.length === 0 ? (
             <div className="text-center py-16">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--muted)] mb-4">
-                <svg className="w-8 h-8 text-[var(--muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[var(--muted)] mb-4">
+                <Icons.prescription className="w-10 h-10 text-[var(--muted-foreground)]" />
               </div>
-              <p className="text-[var(--muted-foreground)] font-medium">No prescriptions found</p>
+              <p className="text-[var(--muted-foreground)] font-medium text-lg">No prescriptions found</p>
+              <p className="text-[var(--muted-foreground)] text-sm mt-2">Prescription queue will appear here</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {prescriptions.map((rx) => (
                 <div
                   key={rx.id}
-                  className={`border-2 rounded-lg p-4 ${
+                  className={`border-2 rounded-xl p-6 transition-all hover:shadow-md ${
                     rx.status === 'pending'
-                      ? 'bg-yellow-50 border-yellow-300'
-                      : 'bg-gray-50 border-gray-300'
+                      ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700'
+                      : 'bg-green-50 dark:bg-green-950/20 border-green-300 dark:border-green-700'
                   }`}
                 >
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-base font-bold">{rx.patients?.users?.name}</h3>
-                        <span
-                          className={`px-2.5 py-1 text-[10px] font-bold rounded-full uppercase ${
-                            rx.status === 'pending'
-                              ? 'bg-yellow-200 text-yellow-800'
-                              : 'bg-green-200 text-green-800'
-                          }`}
-                        >
-                          {rx.status}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 text-xs mb-3">
-                        <div>
-                          <p className="text-gray-700">
-                            📞 <span className="font-semibold">Phone:</span> {rx.patients?.users?.phone || 'N/A'}
-                          </p>
-                          <p className="text-gray-700">
-                            👨‍⚕️ <span className="font-semibold">Doctor:</span> {rx.doctors?.users?.name}
-                          </p>
+                  <div className="flex flex-col lg:flex-row justify-between gap-6">
+                    <div className="flex-1 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-from)] to-[var(--gradient-via)] flex items-center justify-center">
+                          <Icons.user className="w-5 h-5 text-white" />
                         </div>
-                        <div>
-                          <p className="text-gray-700">
-                            🏥 <span className="font-semibold">Specialization:</span> {rx.doctors?.specialization || 'N/A'}
-                          </p>
-                          <p className="text-gray-700">
-                            📅 <span className="font-semibold">Received:</span> {new Date(rx.created_at).toLocaleDateString()}
-                          </p>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-[var(--foreground)]">{rx.patients?.users?.name}</h3>
+                          <span
+                            className={`inline-block px-3 py-1 text-xs font-bold rounded-full uppercase ${
+                              rx.status === 'pending'
+                                ? 'bg-yellow-500 text-white'
+                                : 'bg-green-500 text-white'
+                            }`}
+                          >
+                            {rx.status}
+                          </span>
                         </div>
                       </div>
 
-                      <div className="bg-white p-3 rounded border mb-2">
-                        <p className="font-bold text-sm mb-2" style={{ color: '#006989' }}>
-                          💊 Prescription:
-                        </p>
-                        <p className="text-sm whitespace-pre-wrap">{rx.prescription}</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm text-[var(--foreground)]">
+                            <Icons.phone className="w-4 h-4 text-[var(--muted-foreground)]" />
+                            <span className="font-semibold">Phone:</span>
+                            <span>{rx.patients?.users?.phone || 'N/A'}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-[var(--foreground)]">
+                            <Icons.stethoscope className="w-4 h-4 text-[var(--muted-foreground)]" />
+                            <span className="font-semibold">Doctor:</span>
+                            <span>{rx.doctors?.users?.name}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm text-[var(--foreground)]">
+                            <Icons.hospital className="w-4 h-4 text-[var(--muted-foreground)]" />
+                            <span className="font-semibold">Spec:</span>
+                            <span>{rx.doctors?.specialization || 'N/A'}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-[var(--foreground)]">
+                            <Icons.calendar className="w-4 h-4 text-[var(--muted-foreground)]" />
+                            <span className="font-semibold">Received:</span>
+                            <span>{new Date(rx.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
                       </div>
 
-                      {rx.doctor_notes && (
-                        <div className="bg-blue-50 p-3 rounded border border-blue-200">
-                          <p className="font-bold text-sm mb-1 text-blue-700">📋 Doctor&apos;s Notes:</p>
-                          <p className="text-xs whitespace-pre-wrap text-gray-700">{rx.doctor_notes}</p>
+                      <div className="p-4 bg-[var(--card)] rounded-lg border-2 border-[var(--border)]">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Icons.prescription className="w-5 h-5 text-green-500" />
+                          <p className="font-bold text-sm text-[var(--foreground)]">Prescription:</p>
                         </div>
-                      )}
+                        <p className="text-sm whitespace-pre-wrap text-[var(--muted-foreground)] pl-7">{rx.prescription}</p>
+                      </div>
 
                       {rx.dispensed_at && (
-                        <p className="mt-2 text-xs text-green-600">
-                          ✓ Dispensed on: {new Date(rx.dispensed_at).toLocaleString()}
-                        </p>
+                        <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
+                          <Icons.checkCircle className="w-4 h-4 text-green-500" />
+                          <span>Dispensed on: {new Date(rx.dispensed_at).toLocaleString()}</span>
+                        </div>
                       )}
                     </div>
 
                     {rx.status === 'pending' && (
-                      <div className="flex flex-col gap-1.5">
+                      <div className="flex flex-col gap-2 min-w-[160px]">
                         <button
                           onClick={() => markAsDispensed(rx.id)}
-                          className="px-3 py-1.5 text-white rounded hover:bg-opacity-90 text-xs font-medium whitespace-nowrap"
-                          style={{ backgroundColor: '#006989' }}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md"
                         >
-                          ✓ Mark Dispensed
+                          <Icons.checkCircle className="w-4 h-4" />
+                          Mark Dispensed
                         </button>
                       </div>
                     )}

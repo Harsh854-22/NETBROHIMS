@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getCurrentUser, logout } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { Icons } from '@/components/Icons'
 
 type User = {
   id: string
@@ -20,7 +21,9 @@ type Appointment = {
   appointment_time: string
   reason: string
   status: string
-  notes?: string
+  doctor_notes?: string
+  prescription?: string
+  completed_at?: string
   doctors?: {
     specialization?: string
     users?: {
@@ -128,27 +131,26 @@ export default function PatientPage() {
       <header className="bg-[var(--card)] border-b-2 border-[var(--border)] shadow-lg relative z-10 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] shadow-md hover-lift">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] shadow-lg">
+              <Icons.user className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-[var(--foreground)] bg-gradient-to-r from-[var(--gradient-from)] to-[var(--gradient-to)] bg-clip-text text-transparent">Patient Portal</h1>
-              <p className="text-xs text-[var(--muted-foreground)]">View your appointments</p>
+              <h1 className="text-2xl font-bold text-[var(--foreground)]">Patient Portal</h1>
+              <p className="text-sm text-[var(--muted-foreground)]">View your appointments and prescriptions</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <ThemeToggle />
-            <div className="text-right">
+            <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-[var(--foreground)]">{currentUser?.name}</p>
               <p className="text-xs text-[var(--muted-foreground)]">Patient</p>
             </div>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium text-sm shadow-md"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md"
             >
-              Logout
+              <Icons.logout className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
@@ -170,57 +172,139 @@ export default function PatientPage() {
               <p className="text-sm text-[var(--muted-foreground)] opacity-70">Please contact the hospital admin to schedule an appointment.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {appointments.map((appointment) => (
-                <div key={appointment.id} className={`border-2 rounded-lg p-3 ${getStatusColor(appointment.status)}`}>
-                  <div className="flex justify-between items-start">
+                <div key={appointment.id} className={`border-2 rounded-xl p-6 transition-all hover:shadow-lg ${getStatusColor(appointment.status)}`}>
+                  <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-sm font-semibold">Dr. {appointment.doctors?.users?.name}</h3>
-                        <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-white">
-                          {appointment.status.toUpperCase()}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 text-sm mb-2">
-                        <div>
-                          <p className="text-gray-700">📅 <strong>Date:</strong> {appointment.appointment_date}</p>
-                          <p className="text-gray-700">🕐 <strong>Time:</strong> {appointment.appointment_time}</p>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-from)] to-[var(--gradient-to)] flex items-center justify-center">
+                          <Icons.stethoscope className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <p className="text-gray-700">🏥 <strong>Specialization:</strong> {appointment.doctors?.specialization || 'General'}</p>
-                          <p className="text-gray-700">📞 <strong>Phone:</strong> {appointment.doctors?.users?.phone || 'N/A'}</p>
+                          <h3 className="text-base font-bold text-[var(--foreground)]">Dr. {appointment.doctors?.users?.name}</h3>
+                          <p className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
+                            <Icons.hospital className="w-3 h-3" />
+                            {appointment.doctors?.specialization || 'General Physician'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Icons.calendar className="w-4 h-4 text-[var(--muted-foreground)]" />
+                          <span className="font-semibold text-[var(--foreground)]">Date:</span>
+                          <span className="text-[var(--muted-foreground)]">{appointment.appointment_date}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Icons.clock className="w-4 h-4 text-[var(--muted-foreground)]" />
+                          <span className="font-semibold text-[var(--foreground)]">Time:</span>
+                          <span className="text-[var(--muted-foreground)]">{appointment.appointment_time}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Icons.phone className="w-4 h-4 text-[var(--muted-foreground)]" />
+                          <span className="font-semibold text-[var(--foreground)]">Phone:</span>
+                          <span className="text-[var(--muted-foreground)]">{appointment.doctors?.users?.phone || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Icons.mail className="w-4 h-4 text-[var(--muted-foreground)]" />
+                          <span className="font-semibold text-[var(--foreground)]">Email:</span>
+                          <span className="text-[var(--muted-foreground)] truncate">{appointment.doctors?.users?.email || 'N/A'}</span>
                         </div>
                       </div>
 
                       {appointment.reason && (
-                        <p className="text-sm mt-2"><strong>Reason:</strong> {appointment.reason}</p>
-                      )}
-
-                      {appointment.notes && (
-                        <div className="mt-3 p-3 bg-white rounded border">
-                          <p className="text-sm"><strong>Doctor&apos;s Notes:</strong> {appointment.notes}</p>
+                        <div className="mt-4 p-4 bg-[var(--muted)]/30 rounded-lg border border-[var(--border)]">
+                          <p className="text-sm font-semibold text-[var(--foreground)] mb-1 flex items-center gap-2">
+                            <Icons.clipboard className="w-4 h-4" />
+                            Reason for Visit
+                          </p>
+                          <p className="text-sm text-[var(--muted-foreground)]">{appointment.reason}</p>
                         </div>
                       )}
 
-                      {appointment.status === 'accepted' && (
-                        <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded">
-                          <p className="text-sm text-green-800">✓ Your appointment has been confirmed. Please arrive 10 minutes early.</p>
+                      {appointment.doctor_notes && (
+                        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                          <p className="text-sm font-bold text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-2">
+                            <Icons.notes className="w-4 h-4" />
+                            Doctor&apos;s Notes
+                          </p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{appointment.doctor_notes}</p>
+                        </div>
+                      )}
+
+                      {appointment.prescription && (
+                        <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border-2 border-green-200 dark:border-green-800">
+                          <p className="text-sm font-bold text-green-700 dark:text-green-400 mb-2 flex items-center gap-2">
+                            <Icons.prescription className="w-4 h-4" />
+                            Prescription
+                          </p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{appointment.prescription}</p>
+                        </div>
+                      )}
+
+                      {appointment.completed_at && (
+                        <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                            <Icons.checkCircle className="w-4 h-4 text-green-600" />
+                            Completed on {new Date(appointment.completed_at).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+
+                      {appointment.status === 'accepted' && !appointment.completed_at && (
+                        <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/20 border-2 border-green-200 dark:border-green-800 rounded-lg">
+                          <p className="text-sm text-green-800 dark:text-green-300 flex items-center gap-2 font-semibold">
+                            <Icons.checkCircle className="w-5 h-5" />
+                            Appointment Confirmed!
+                          </p>
+                          <p className="text-xs text-green-700 dark:text-green-400 mt-1">Please arrive 10-15 minutes early for registration.</p>
                         </div>
                       )}
 
                       {appointment.status === 'rejected' && (
-                        <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded">
-                          <p className="text-sm text-red-800">✗ This appointment was rejected. Please contact the hospital for rescheduling.</p>
+                        <div className="mt-4 p-4 bg-red-50 dark:bg-red-950/20 border-2 border-red-200 dark:border-red-800 rounded-lg">
+                          <p className="text-sm text-red-800 dark:text-red-300 flex items-center gap-2 font-semibold">
+                            <Icons.warning className="w-5 h-5" />
+                            Appointment Not Available
+                          </p>
+                          <p className="text-xs text-red-700 dark:text-red-400 mt-1">Please contact the hospital to reschedule.</p>
                         </div>
                       )}
 
                       {appointment.status === 'rescheduled' && (
-                        <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
-                          <p className="text-sm text-blue-800">📅 This appointment has been rescheduled. Check the notes for new timing.</p>
+                        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 border-2 border-blue-200 dark:border-blue-800 rounded-lg">
+                          <p className="text-sm text-blue-800 dark:text-blue-300 flex items-center gap-2 font-semibold">
+                            <Icons.calendar className="w-5 h-5" />
+                            Appointment Rescheduled
+                          </p>
+                          <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">Please check the updated date and time above.</p>
+                        </div>
+                      )}
+
+                      {appointment.status === 'pending' && (
+                        <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-950/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-lg">
+                          <p className="text-sm text-yellow-800 dark:text-yellow-300 flex items-center gap-2 font-semibold">
+                            <Icons.clock className="w-5 h-5" />
+                            Awaiting Confirmation
+                          </p>
+                          <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-1">The doctor will review and confirm your appointment soon.</p>
                         </div>
                       )}
                     </div>
+                    <span className={`px-3 py-1.5 text-xs font-bold rounded-full uppercase flex items-center gap-1 ${
+                      appointment.status === 'pending' ? 'bg-yellow-500 text-white' :
+                      appointment.status === 'accepted' ? 'bg-green-500 text-white' :
+                      appointment.status === 'rejected' ? 'bg-red-500 text-white' :
+                      appointment.status === 'rescheduled' ? 'bg-blue-500 text-white' :
+                      'bg-gray-500 text-white'
+                    }`}>
+                      {appointment.status === 'pending' && <Icons.clock className="w-3 h-3" />}
+                      {appointment.status === 'accepted' && <Icons.checkCircle className="w-3 h-3" />}
+                      {appointment.status === 'rejected' && <Icons.x className="w-3 h-3" />}
+                      {appointment.status === 'completed' && <Icons.check className="w-3 h-3" />}
+                      {appointment.status}
+                    </span>
                   </div>
                 </div>
               ))}

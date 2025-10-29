@@ -230,7 +230,7 @@ export default function LoginPage() {
               </div>
               <h2 className="text-3xl font-bold text-[var(--foreground)] mb-3">Reset Password</h2>
               <p className="text-[var(--muted-foreground)] text-base">
-                We'll send you a reset link to your email
+                We&apos;ll send you a reset link to your email
               </p>
             </div>
 
