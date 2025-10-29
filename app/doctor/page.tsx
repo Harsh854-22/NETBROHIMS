@@ -271,19 +271,19 @@ export default function DoctorPage() {
 
       {/* Header */}
       <header className="bg-[var(--card)] border-b-2 border-[var(--border)] shadow-lg relative z-10 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] shadow-md">
-              <Icons.stethoscope className="w-6 h-6 text-white" />
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] shadow-lg">
+              <Icons.stethoscope className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-[var(--foreground)]">Doctor Dashboard</h1>
-              <p className="text-xs text-[var(--muted-foreground)]">Manage your appointments</p>
+              <h1 className="text-2xl font-bold text-[var(--foreground)]">Doctor Dashboard</h1>
+              <p className="text-sm text-[var(--muted-foreground)] font-medium">Manage your appointments</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <div className="text-right">
+            <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-[var(--foreground)]">Dr. {currentUser?.name}</p>
               <p className="text-xs text-[var(--muted-foreground)]">Physician</p>
             </div>
@@ -292,20 +292,27 @@ export default function DoctorPage() {
               className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md"
             >
               <Icons.logout className="w-4 h-4" />
-              Logout
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pb-12 relative z-10">
         <div className="bg-[var(--card)] border-2 border-[var(--border)] rounded-2xl shadow-xl p-6 backdrop-blur-sm">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h2 className="text-2xl font-bold text-[var(--foreground)]">My Appointments</h2>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+                <Icons.calendar className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-600 bg-clip-text text-transparent">My Appointments</h2>
+            </div>
             <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full sm:w-auto">
               <div className="relative">
-                <Icons.search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Icons.search className="w-4 h-4 text-[var(--muted-foreground)]" />
+                </div>
                 <input
                   type="text"
                   placeholder="Search patient..."

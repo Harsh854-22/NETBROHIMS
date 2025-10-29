@@ -231,7 +231,7 @@ export default function DoctorsView({ currentUserId, searchTerm, setSearchTerm }
           </div>
           <button
             type="submit"
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md min-w-fit whitespace-nowrap"
           >
             <Icons.check className="w-4 h-4" />
             Create Doctor Account
@@ -279,7 +279,7 @@ export default function DoctorsView({ currentUserId, searchTerm, setSearchTerm }
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <button
                     onClick={() => handleDeleteDoctor(doctor.id, doctor.users?.id || '')}
-                    className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-xs"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-xs min-w-fit whitespace-nowrap"
                     disabled={!doctor.users?.id}
                   >
                     <Icons.trash className="w-3.5 h-3.5" />

@@ -129,14 +129,14 @@ export default function PatientPage() {
 
       {/* Header */}
       <header className="bg-[var(--card)] border-b-2 border-[var(--border)] shadow-lg relative z-10 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] shadow-lg">
-              <Icons.user className="w-6 h-6 text-white" />
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] shadow-lg">
+              <Icons.user className="w-7 h-7 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-[var(--foreground)]">Patient Portal</h1>
-              <p className="text-sm text-[var(--muted-foreground)]">View your appointments and prescriptions</p>
+              <p className="text-sm text-[var(--muted-foreground)] font-medium">View your appointments and prescriptions</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -157,9 +157,14 @@ export default function PatientPage() {
       </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pb-12 relative z-10">
         <div className="bg-[var(--card)] border-2 border-[var(--border)] rounded-2xl shadow-xl p-6 backdrop-blur-sm animate-fadeIn hover-lift">
-          <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-[var(--gradient-from)] to-[var(--gradient-to)] bg-clip-text text-transparent">My Appointments</h2>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+              <Icons.calendar className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-600 bg-clip-text text-transparent">My Appointments</h2>
+          </div>
 
           {appointments.length === 0 ? (
             <div className="text-center py-16">
@@ -172,7 +177,7 @@ export default function PatientPage() {
               <p className="text-sm text-[var(--muted-foreground)] opacity-70">Please contact the hospital admin to schedule an appointment.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {appointments.map((appointment) => (
                 <div key={appointment.id} className={`border-2 rounded-xl p-6 transition-all hover:shadow-lg ${getStatusColor(appointment.status)}`}>
                   <div className="flex justify-between items-start mb-4">

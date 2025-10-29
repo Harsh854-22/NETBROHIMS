@@ -27,7 +27,7 @@ export default function DashboardView() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="bg-[var(--card)] border-2 border-[var(--border)] p-8 rounded-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 border-l-4 border-l-[var(--primary)]">
+      <div className="bg-[var(--card)] border-2 border-[var(--border)] p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border-l-4 border-l-[var(--primary)]">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wide mb-2">Total Doctors</p>
@@ -38,7 +38,7 @@ export default function DashboardView() {
           </div>
         </div>
       </div>
-      <div className="bg-[var(--card)] border-2 border-[var(--border)] p-8 rounded-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 border-l-4 border-l-green-500">
+      <div className="bg-[var(--card)] border-2 border-[var(--border)] p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border-l-4 border-l-green-500">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wide mb-2">Total Patients</p>
@@ -49,7 +49,7 @@ export default function DashboardView() {
           </div>
         </div>
       </div>
-      <div className="bg-[var(--card)] border-2 border-[var(--border)] p-8 rounded-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 border-l-4 border-l-purple-500">
+      <div className="bg-[var(--card)] border-2 border-[var(--border)] p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border-l-4 border-l-purple-500">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wide mb-2">Total Appointments</p>

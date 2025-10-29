@@ -10,6 +10,7 @@ import DoctorsView from '@/components/admin/DoctorsView'
 import PatientsView from '@/components/admin/PatientsView'
 import AppointmentsView from '@/components/admin/AppointmentsView'
 import PharmacistsView from '@/components/admin/PharmacistsView'
+import SettingsView from '@/components/admin/SettingsView'
 
 type User = {
   id: string
@@ -22,7 +23,7 @@ type User = {
 export default function AdminPage() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'doctors' | 'patients' | 'appointments' | 'pharmacists'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'doctors' | 'patients' | 'appointments' | 'pharmacists' | 'settings'>('dashboard')
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -152,16 +153,28 @@ export default function AdminPage() {
               <Icons.pill className="w-4 h-4" />
               <span className="hidden sm:inline">Pharmacists</span>
             </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`flex items-center gap-2 flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'settings'
+                  ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md'
+                  : 'text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]'
+              }`}
+            >
+              <Icons.settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Settings</span>
+            </button>
           </nav>
         </div>
 
         {/* Content */}
-        <div className="mt-8">
+        <div className="mt-8 mb-12">
           {activeTab === 'dashboard' && <DashboardView />}
           {activeTab === 'doctors' && <DoctorsView currentUserId={currentUser?.id || ''} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
           {activeTab === 'patients' && <PatientsView currentUserId={currentUser?.id || ''} />}
           {activeTab === 'appointments' && <AppointmentsView searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
           {activeTab === 'pharmacists' && <PharmacistsView />}
+          {activeTab === 'settings' && <SettingsView />}
         </div>
       </div>
     </div>

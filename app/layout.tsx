@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { ThemeProvider } from '@/contexts/ThemeContext'
+import { UISettingsProvider } from '@/contexts/UISettingsContext'
 
 export const metadata: Metadata = {
   title: 'Hospital Management System',
@@ -16,7 +17,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <ThemeProvider>
-          {children}
+          <UISettingsProvider>
+            {children}
+          </UISettingsProvider>
         </ThemeProvider>
       </body>
     </html>
