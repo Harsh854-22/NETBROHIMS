@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { login, setCurrentUser, sendPasswordResetEmail } from '@/lib/auth'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { Icons } from '@/components/Icons'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [resetLoading, setResetLoading] = useState(false)
   const [resetMessage, setResetMessage] = useState('')
   const [resetSuccess, setResetSuccess] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,7 +26,7 @@ export default function LoginPage() {
 
     try {
       const user = await login(email, password)
-      
+
       if (!user) {
         setError('Invalid email or password')
         setLoading(false)
@@ -62,7 +64,7 @@ export default function LoginPage() {
       const result = await sendPasswordResetEmail(resetEmail)
       setResetMessage(result.message)
       setResetSuccess(result.success)
-      
+
       if (result.success) {
         setTimeout(() => {
           setShowForgotPassword(false)
@@ -79,138 +81,125 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[var(--background)]">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Gradient orbs */}
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] rounded-full mix-blend-multiply dark:mix-blend-normal filter blur-3xl opacity-20 animate-pulse"></div>
-        <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-[var(--gradient-to)] via-[var(--gradient-via)] to-[var(--gradient-from)] rounded-full mix-blend-multiply dark:mix-blend-normal filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-gradient-to-tr from-[var(--gradient-via)] to-[var(--gradient-to)] rounded-full mix-blend-multiply dark:mix-blend-normal filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }}></div>
-        
-        {/* Grid pattern */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjEiIG9wYWNpdHk9IjAuMDUiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-40"></div>
-      </div>
-
-      {/* Theme Toggle - Top Right */}
-      <div className="absolute top-6 right-6 z-50 animate-fadeIn">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
+      {/* Theme Toggle */}
+      <div className="absolute top-6 right-6 z-50">
         <ThemeToggle />
       </div>
 
-      {/* Login Card */}
-      <div className="w-full max-w-lg mx-4 relative z-10 animate-scaleIn">
-        <div className="card p-10 shadow-2xl border-2 hover-lift">
-          {/* Logo & Header */}
-          <div className="text-center mb-10">
-            {/* Icon with gradient */}
-            <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl mb-6 relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] rounded-3xl opacity-100 group-hover:opacity-90 transition-opacity shadow-2xl"></div>
-              <svg className="w-12 h-12 text-white relative z-10 drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <h1 className="text-4xl font-bold mb-3">
-              <span className="gradient-text">Welcome Back</span>
-            </h1>
-            <p className="text-[var(--muted-foreground)] text-base">Sign in to Hospital Management System</p>
+      {/* Main Container */}
+      <div className="w-full max-w-md mx-auto space-y-8">
+        {/* Logo and Title */}
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 shadow-2xl">
+            <Icons.hospital className="w-8 h-8 text-white" />
           </div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Welcome Back</h1>
+          <p className="text-slate-600 dark:text-slate-400">Sign in to your HIMS account</p>
+        </div>
 
-          {/* Form */}
+        {/* Login Form */}
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error Alert */}
+            {/* Error Message */}
             {error && (
-              <div className="alert alert-destructive animate-fadeIn">
-                <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-                <span className="text-sm font-semibold">{error}</span>
+              <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                <Icons.warning className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                <span className="text-sm font-medium text-red-800 dark:text-red-200">{error}</span>
               </div>
             )}
 
-            {/* Email Input */}
-            <div className="space-y-2.5">
-              <label htmlFor="email" className="block text-sm font-semibold text-[var(--foreground)] pl-6">
+            {/* Email Field */}
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Email Address
               </label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] pointer-events-none z-10">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none">
+                  <Icons.mail className="w-4 h-4" />
                 </div>
                 <input
                   id="email"
                   type="email"
                   required
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 bg-[var(--input)] border-2 border-[var(--border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all text-sm"
-                  placeholder="Enter your email"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  placeholder="your.email@hospital.com"
                 />
               </div>
             </div>
 
-            {/* Password Input */}
-            <div className="space-y-2.5">
-              <label htmlFor="password" className="block text-sm font-semibold text-[var(--foreground)] px-3">
+            {/* Password Field */}
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Password
               </label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] pointer-events-none z-10">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none">
+                  <Icons.lock className="w-4 h-4" />
                 </div>
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 bg-[var(--input)] border-2 border-[var(--border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all text-sm"
+                  className="w-full pl-11 pr-12 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   placeholder="Enter your password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <Icons.eyeOff className="w-4 h-4" />
+                  ) : (
+                    <Icons.eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 
-            {/* Submit Button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white font-semibold py-2.5 px-4 rounded-xl hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg text-sm"
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Signing in...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                    </svg>
-                    <span>Sign In</span>
-                  </div>
-                )}
-              </button>
-            </div>
-
-            {/* Forgot Password Link */}
-            <div className="text-center pt-2">
+            {/* Forgot Password */}
+            <div className="flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowForgotPassword(true)}
-                className="text-sm font-semibold text-[var(--primary)] hover:underline transition-all"
+                className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
               >
-                Forgot your password?
+                Forgot password?
               </button>
             </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 text-white font-semibold py-3 px-6 rounded-xl hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200 shadow-md"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-3">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Signing in...</span>
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <span>Sign In</span>
+                  <Icons.arrowRight className="w-4 h-4" />
+                </span>
+              )}
+            </button>
           </form>
 
           {/* Footer */}
-          <div className="mt-10 pt-8 border-t border-[var(--border)] text-center">
-            <p className="text-sm text-[var(--muted-foreground)] font-medium">
-              © 2025 Hospital Management System. All rights reserved.
+          <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
+            <p className="text-xs text-center text-slate-500 dark:text-slate-400">
+              © 2025 NetBro HIMS. All rights reserved.
             </p>
           </div>
         </div>
@@ -218,78 +207,83 @@ export default function LoginPage() {
 
       {/* Forgot Password Modal */}
       {showForgotPassword && (
-        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="card max-w-lg w-full p-10 shadow-2xl border-2 animate-scaleIn">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl max-w-md w-full p-8 space-y-6">
             {/* Modal Header */}
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl mb-6 relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-[var(--gradient-from)] to-[var(--gradient-to)] rounded-3xl"></div>
-                <svg className="w-10 h-10 text-white relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                </svg>
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl mb-4 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 shadow-lg">
+                <Icons.key className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-3xl font-bold text-[var(--foreground)] mb-3">Reset Password</h2>
-              <p className="text-[var(--muted-foreground)] text-base">
-                We&apos;ll send you a reset link to your email
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Reset Password</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Enter your email and we&apos;ll send you a reset link
               </p>
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleForgotPassword} className="space-y-6">
-              {/* Success/Error Message */}
+            <form onSubmit={handleForgotPassword} className="space-y-5">
+              {/* Message */}
               {resetMessage && (
-                <div className={`alert ${resetSuccess ? 'alert-success' : 'alert-destructive'} animate-fadeIn`}>
-                  <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    {resetSuccess ? (
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    ) : (
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    )}
-                  </svg>
-                  <span className="text-sm font-semibold">{resetMessage}</span>
+                <div className={`flex items-center gap-3 p-4 rounded-xl border ${
+                  resetSuccess
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                }`}>
+                  {resetSuccess ? (
+                    <Icons.checkCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                  ) : (
+                    <Icons.warning className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                  )}
+                  <span className={`text-sm font-medium ${
+                    resetSuccess
+                      ? 'text-green-800 dark:text-green-200'
+                      : 'text-red-800 dark:text-red-200'
+                  }`}>
+                    {resetMessage}
+                  </span>
                 </div>
               )}
 
               {/* Email Input */}
-              <div className="space-y-2.5">
-                <label htmlFor="reset-email" className="block text-sm font-semibold text-[var(--foreground)] px-1">
+              <div className="space-y-2">
+                <label htmlFor="reset-email" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
                   Email Address
                 </label>
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] pointer-events-none z-10">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none">
+                    <Icons.mail className="w-4 h-10" />
                   </div>
                   <input
                     id="reset-email"
                     type="email"
                     required
+                    autoComplete="email"
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-2.5 bg-[var(--input)] border-2 border-[var(--border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all text-sm"
-                    placeholder="Enter your email"
+                    className="w-full pl-11 pr-4 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    placeholder="your.email@hospital.com"
                   />
                 </div>
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => {
                     setShowForgotPassword(false)
                     setResetEmail('')
                     setResetMessage('')
+                    setResetSuccess(false)
                   }}
-                  className="flex-1 bg-[var(--muted)] hover:bg-[var(--accent)] text-[var(--foreground)] font-semibold py-2.5 px-4 rounded-xl transition-all text-sm border-2 border-[var(--border)]"
+                  className="flex-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-semibold py-3 px-5 rounded-xl transition-all hover:scale-105"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={resetLoading}
-                  className="flex-1 bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white font-semibold py-2.5 px-4 rounded-xl hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg text-sm"
+                  className="flex-1 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 text-white font-semibold py-3 px-5 rounded-xl hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all shadow-md"
                 >
                   {resetLoading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -297,11 +291,32 @@ export default function LoginPage() {
                       <span>Sending...</span>
                     </span>
                   ) : (
-                    'Send Link'
+                    <span className="flex items-center justify-center gap-2">
+                      <span>Send Reset Link</span>
+                      <Icons.send className="w-4 h-4" />
+                    </span>
                   )}
                 </button>
               </div>
             </form>
+
+            {/* Help Text */}
+            <div className="pt-6 border-t border-slate-200 dark:border-slate-700 text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Remember your password?{' '}
+                <button
+                  onClick={() => {
+                    setShowForgotPassword(false)
+                    setResetEmail('')
+                    setResetMessage('')
+                    setResetSuccess(false)
+                  }}
+                  className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                >
+                  Sign in
+                </button>
+              </p>
+            </div>
           </div>
         </div>
       )}
