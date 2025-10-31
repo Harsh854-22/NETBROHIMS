@@ -48,7 +48,11 @@ type Notification = {
   type: 'success' | 'error' | 'info'
 }
 
-export default function ReferralsView() {
+type ReferralsViewProps = {
+  currentUserId: string
+}
+
+export default function ReferralsView({ currentUserId }: ReferralsViewProps) {
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending')
   const [loading, setLoading] = useState(true)
@@ -86,6 +90,7 @@ export default function ReferralsView() {
           reason
         )
       `)
+      .eq('created_by_admin_id', currentUserId) // Filter by current admin
       .order('created_at', { ascending: false })
 
     if (filter !== 'all') {
@@ -98,7 +103,7 @@ export default function ReferralsView() {
       setReferrals(data as Referral[])
     }
     setLoading(false)
-  }, [filter])
+  }, [filter, currentUserId])
 
   useEffect(() => {
     loadReferrals()

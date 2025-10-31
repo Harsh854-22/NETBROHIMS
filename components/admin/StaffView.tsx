@@ -13,7 +13,11 @@ type Staff = {
   created_at: string
 }
 
-export default function StaffView() {
+type StaffViewProps = {
+  currentUserId: string
+}
+
+export default function StaffView({ currentUserId }: StaffViewProps) {
   const [staff, setStaff] = useState<Staff[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -28,14 +32,16 @@ export default function StaffView() {
 
   useEffect(() => {
     loadStaff()
-  }, [])
+  }, [currentUserId])
 
   const loadStaff = async () => {
     setLoading(true)
+    // Filter staff by current admin - each admin sees only their own staff
     const { data, error } = await supabase
       .from('users')
       .select('*')
       .eq('role', 'staff')
+      .eq('created_by_admin_id', currentUserId)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -49,21 +55,22 @@ export default function StaffView() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const newUser = await createUser(
+    const result = await createUser(
       formData.email,
-      formData.name,
-      'staff',
       formData.password,
-      formData.phone
+      'staff',
+      formData.name,
+      formData.phone,
+      currentUserId // Track which admin created this staff member
     )
 
-    if (newUser) {
+    if (result.success) {
       alert('Staff member created successfully!')
       setShowModal(false)
       resetForm()
       loadStaff()
     } else {
-      alert('Error creating staff member')
+      alert(result.message || 'Error creating staff member')
     }
   }
 

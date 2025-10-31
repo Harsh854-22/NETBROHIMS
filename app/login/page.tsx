@@ -36,7 +36,9 @@ export default function LoginPage() {
       await setCurrentUser(user)
 
       // Redirect based on role
-      if (user.role === 'admin') {
+      if (user.role === 'superadmin') {
+        router.push('/superadmin')
+      } else if (user.role === 'admin') {
         router.push('/admin')
       } else if (user.role === 'doctor') {
         router.push('/doctor')

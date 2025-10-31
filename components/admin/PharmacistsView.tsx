@@ -57,7 +57,11 @@ type Assignment = {
   }
 }
 
-export default function PharmacistsView() {
+type PharmacistsViewProps = {
+  currentUserId: string
+}
+
+export default function PharmacistsView({ currentUserId }: PharmacistsViewProps) {
   const [pharmacyShops, setPharmacyShops] = useState<PharmacyShop[]>([])
   const [pharmacists, setPharmacists] = useState<Pharmacist[]>([])
   const [doctors, setDoctors] = useState<Doctor[]>([])
@@ -91,12 +95,13 @@ export default function PharmacistsView() {
     loadPharmacists()
     loadDoctors()
     loadAssignments()
-  }, [])
+  }, [currentUserId])
 
   const loadPharmacyShops = async () => {
     const { data, error } = await supabase
       .from('pharmacy_shops')
       .select('*')
+      .eq('created_by_admin_id', currentUserId) // Filter by current admin
       .order('name')
 
     if (!error && data) {
@@ -112,6 +117,7 @@ export default function PharmacistsView() {
         users:user_id (id, name, email, phone),
         pharmacy_shops:pharmacy_shop_id (id, name)
       `)
+      .eq('created_by_admin_id', currentUserId) // Filter by current admin
 
     if (!error && data) {
       setPharmacists(data)
@@ -125,6 +131,7 @@ export default function PharmacistsView() {
         *,
         users:user_id (id, name, email)
       `)
+      .eq('created_by_admin_id', currentUserId) // Filter by current admin
 
     if (!error && data) {
       setDoctors(data)
@@ -156,7 +163,8 @@ export default function PharmacistsView() {
       address: shopFormData.address,
       phone: shopFormData.phone,
       email: shopFormData.email,
-      license_number: shopFormData.license_number
+      license_number: shopFormData.license_number,
+      created_by_admin_id: currentUserId // Track which admin created this shop
     })
 
     if (error) {
@@ -173,19 +181,20 @@ export default function PharmacistsView() {
   const handlePharmacistSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Create user
-    const user = await createUser(pharmacistFormData.email, pharmacistFormData.name, 'pharmacist', pharmacistFormData.password, pharmacistFormData.phone)
+    // Create user with admin tracking
+    const result = await createUser(pharmacistFormData.email, pharmacistFormData.password, 'pharmacist', pharmacistFormData.name, pharmacistFormData.phone, currentUserId)
     
-    if (!user) {
-      alert('Error creating pharmacist user')
+    if (!result.success || !result.user) {
+      alert(result.message || 'Error creating pharmacist user')
       return
     }
 
     // Create pharmacist profile
     const { error } = await supabase.from('pharmacists').insert({
-      user_id: user.id,
+      user_id: result.user.id,
       pharmacy_shop_id: pharmacistFormData.pharmacy_shop_id || null,
-      license_number: pharmacistFormData.license_number
+      license_number: pharmacistFormData.license_number,
+      created_by_admin_id: currentUserId // Track which admin created this pharmacist
     })
 
     if (error) {

@@ -4,18 +4,23 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Icons } from '@/components/Icons'
 
-export default function DashboardView() {
+type DashboardViewProps = {
+  currentUserId: string
+}
+
+export default function DashboardView({ currentUserId }: DashboardViewProps) {
   const [stats, setStats] = useState({ doctors: 0, patients: 0, appointments: 0 })
 
   useEffect(() => {
     loadStats()
-  }, [])
+  }, [currentUserId])
 
   const loadStats = async () => {
+    // Filter all stats by current admin - show only their data
     const [doctorsRes, patientsRes, appointmentsRes] = await Promise.all([
-      supabase.from('doctors').select('id', { count: 'exact', head: true }),
-      supabase.from('patients').select('id', { count: 'exact', head: true }),
-      supabase.from('appointments').select('id', { count: 'exact', head: true })
+      supabase.from('doctors').select('id', { count: 'exact', head: true }).eq('created_by_admin_id', currentUserId),
+      supabase.from('patients').select('id', { count: 'exact', head: true }).eq('created_by_admin_id', currentUserId),
+      supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('created_by_admin_id', currentUserId)
     ])
 
     setStats({

@@ -56,9 +56,10 @@ type Patient = {
 type AppointmentsViewProps = {
   searchTerm: string
   setSearchTerm: (term: string) => void
+  currentUserId: string
 }
 
-export default function AppointmentsView({ searchTerm, setSearchTerm }: AppointmentsViewProps) {
+export default function AppointmentsView({ searchTerm, setSearchTerm, currentUserId }: AppointmentsViewProps) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
@@ -82,7 +83,7 @@ export default function AppointmentsView({ searchTerm, setSearchTerm }: Appointm
     }, 10000)
     
     return () => clearInterval(interval)
-  }, [])
+  }, [currentUserId])
 
   const loadAppointments = async () => {
     const { data, error } = await supabase
@@ -99,6 +100,7 @@ export default function AppointmentsView({ searchTerm, setSearchTerm }: Appointm
           specialization
         )
       `)
+      .eq('created_by_admin_id', currentUserId) // Filter by current admin
       .order('appointment_date', { ascending: false })
 
     if (!error && data) {
@@ -157,6 +159,7 @@ export default function AppointmentsView({ searchTerm, setSearchTerm }: Appointm
         *,
         users:user_id (id, name, email)
       `)
+      .eq('created_by_admin_id', currentUserId) // Filter by current admin
     if (data) setDoctors(data)
   }
 
@@ -167,6 +170,7 @@ export default function AppointmentsView({ searchTerm, setSearchTerm }: Appointm
         *,
         users:user_id (id, name, email)
       `)
+      .eq('created_by_admin_id', currentUserId) // Filter by current admin
     if (data) setPatients(data)
   }
 
@@ -187,7 +191,8 @@ export default function AppointmentsView({ searchTerm, setSearchTerm }: Appointm
       appointment_time: formData.appointment_time,
       reason: formData.reason,
       status: 'pending',
-      created_by: currentUser.id
+      created_by: currentUser.id,
+      created_by_admin_id: currentUserId // Track which admin created this appointment
     })
 
     if (error) {

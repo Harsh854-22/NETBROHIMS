@@ -40,15 +40,17 @@ export default function PatientsView({ currentUserId }: PatientsViewProps) {
 
   useEffect(() => {
     loadPatients()
-  }, [])
+  }, [currentUserId])
 
   const loadPatients = async () => {
+    // Filter patients by current admin - each admin sees only their own patients
     const { data, error } = await supabase
       .from('patients')
       .select(`
         *,
         users:user_id (id, name, email, phone)
       `)
+      .eq('created_by_admin_id', currentUserId)
 
     if (!error && data) {
       setPatients(data)
@@ -87,20 +89,21 @@ export default function PatientsView({ currentUserId }: PatientsViewProps) {
     e.preventDefault()
     
     // Create user
-    const user = await createUser(formData.email, formData.name, 'patient', formData.password, formData.phone)
+    const result = await createUser(formData.email, formData.password, 'patient', formData.name, formData.phone)
     
-    if (!user) {
-      alert('Error creating patient user')
+    if (!result.success || !result.user) {
+      alert(result.message || 'Error creating patient user')
       return
     }
 
-    // Create patient profile
+    // Create patient profile with admin tracking
     const { error } = await supabase.from('patients').insert({
-      user_id: user.id,
+      user_id: result.user.id,
       date_of_birth: formData.date_of_birth || null,
       gender: formData.gender || null,
       address: formData.address || null,
-      medical_history: formData.medical_history || null
+      medical_history: formData.medical_history || null,
+      created_by_admin_id: currentUserId // Track which admin created this patient
     })
 
     if (error) {

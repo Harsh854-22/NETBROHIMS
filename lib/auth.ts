@@ -5,7 +5,7 @@ export type User = {
   id: string
   email: string
   name: string
-  role: 'admin' | 'doctor' | 'patient' | 'pharmacist' | 'staff'
+  role: 'superadmin' | 'admin' | 'doctor' | 'patient' | 'pharmacist' | 'staff'
   phone?: string
 }
 
@@ -42,11 +42,12 @@ export async function login(email: string, password: string): Promise<User | nul
 
 export async function createUser(
   email: string,
-  name: string,
-  role: 'admin' | 'doctor' | 'patient' | 'pharmacist' | 'staff',
   password: string,
-  phone?: string
-): Promise<User | null> {
+  role: 'superadmin' | 'admin' | 'doctor' | 'patient' | 'pharmacist' | 'staff',
+  name: string,
+  phone?: string,
+  createdByAdminId?: string
+): Promise<{ success: boolean; message: string; user?: User }> {
   try {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10)
@@ -59,21 +60,48 @@ export async function createUser(
         name,
         role,
         password_hash: passwordHash,
-        phone
+        phone,
+        created_by_admin_id: createdByAdminId || null
       })
       .select()
       .single()
 
-    if (error || !user) {
+    if (error) {
       console.error('Error creating user:', error)
-      return null
+      
+      // Check for specific errors
+      if (error.code === '23505') {
+        return {
+          success: false,
+          message: 'A user with this email already exists'
+        }
+      }
+      
+      return {
+        success: false,
+        message: error.message || 'Failed to create user'
+      }
+    }
+
+    if (!user) {
+      return {
+        success: false,
+        message: 'Failed to create user'
+      }
     }
 
     const { password_hash, ...userWithoutPassword } = user
-    return userWithoutPassword as User
+    return {
+      success: true,
+      message: 'User created successfully',
+      user: userWithoutPassword as User
+    }
   } catch (error) {
     console.error('Create user error:', error)
-    return null
+    return {
+      success: false,
+      message: 'An error occurred while creating user'
+    }
   }
 }
 
@@ -185,6 +213,42 @@ export async function resetPassword(newPassword: string): Promise<{ success: boo
     return {
       success: false,
       message: 'An error occurred. Please try again later.'
+    }
+  }
+}
+
+// Change user password (for superadmin to change admin passwords)
+export async function changeUserPassword(
+  userId: string,
+  newPassword: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 10)
+
+    // Update user password
+    const { error } = await supabase
+      .from('users')
+      .update({ password_hash: passwordHash })
+      .eq('id', userId)
+
+    if (error) {
+      console.error('Error changing password:', error)
+      return {
+        success: false,
+        message: 'Failed to change password'
+      }
+    }
+
+    return {
+      success: true,
+      message: 'Password changed successfully'
+    }
+  } catch (error) {
+    console.error('Change password error:', error)
+    return {
+      success: false,
+      message: 'An error occurred while changing password'
     }
   }
 }

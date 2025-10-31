@@ -40,15 +40,17 @@ export default function DoctorsView({ currentUserId, searchTerm, setSearchTerm }
 
   useEffect(() => {
     loadDoctors()
-  }, [])
+  }, [currentUserId])
 
   const loadDoctors = async () => {
+    // Filter doctors by current admin - each admin sees only their own doctors
     const { data, error } = await supabase
       .from('doctors')
       .select(`
         *,
         users:user_id (id, name, email, phone)
       `)
+      .eq('created_by_admin_id', currentUserId)
 
     if (!error && data) {
       setDoctors(data)
@@ -87,19 +89,20 @@ export default function DoctorsView({ currentUserId, searchTerm, setSearchTerm }
     e.preventDefault()
     
     // Create user
-    const user = await createUser(formData.email, formData.name, 'doctor', formData.password, formData.phone)
+    const result = await createUser(formData.email, formData.password, 'doctor', formData.name, formData.phone)
     
-    if (!user) {
-      alert('Error creating doctor user')
+    if (!result.success || !result.user) {
+      alert(result.message || 'Error creating doctor user')
       return
     }
 
-    // Create doctor profile
+    // Create doctor profile with admin tracking
     const { error } = await supabase.from('doctors').insert({
-      user_id: user.id,
+      user_id: result.user.id,
       specialization: formData.specialization,
       qualification: formData.qualification,
-      experience_years: formData.experience_years ? parseInt(formData.experience_years) : null
+      experience_years: formData.experience_years ? parseInt(formData.experience_years) : null,
+      created_by_admin_id: currentUserId // Track which admin created this doctor
     })
 
     if (error) {

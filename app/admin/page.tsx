@@ -18,7 +18,7 @@ type User = {
   id: string
   email: string
   name: string
-  role: 'admin' | 'doctor' | 'patient' | 'pharmacist' | 'staff'
+  role: 'superadmin' | 'admin' | 'doctor' | 'patient' | 'pharmacist' | 'staff'
   phone?: string
 }
 
@@ -81,9 +81,9 @@ export default function AdminPage() {
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-semibold text-[var(--foreground)]">{currentUser?.name}</p>
-              <p className="text-xs text-[var(--muted-foreground)]">Administrator</p>
+            <div className="text-right hidden sm:block bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 px-4 py-2 rounded-lg border-2 border-blue-200 dark:border-blue-700">
+              <p className="text-sm font-bold text-[var(--foreground)]">{currentUser?.name}</p>
+              <p className="text-xs text-[var(--muted-foreground)] font-medium">Administrator • {currentUser?.email}</p>
             </div>
             <button
               onClick={handleLogout}
@@ -193,13 +193,13 @@ export default function AdminPage() {
 
         {/* Content */}
         <div className="mt-8 mb-12">
-          {activeTab === 'dashboard' && <DashboardView />}
+          {activeTab === 'dashboard' && <DashboardView currentUserId={currentUser?.id || ''} />}
           {activeTab === 'doctors' && <DoctorsView currentUserId={currentUser?.id || ''} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
           {activeTab === 'patients' && <PatientsView currentUserId={currentUser?.id || ''} />}
-          {activeTab === 'appointments' && <AppointmentsView searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
-          {activeTab === 'pharmacists' && <PharmacistsView />}
-          {activeTab === 'staff' && <StaffView />}
-          {activeTab === 'referrals' && <ReferralsView />}
+          {activeTab === 'appointments' && <AppointmentsView currentUserId={currentUser?.id || ''} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
+          {activeTab === 'pharmacists' && <PharmacistsView currentUserId={currentUser?.id || ''} />}
+          {activeTab === 'staff' && <StaffView currentUserId={currentUser?.id || ''} />}
+          {activeTab === 'referrals' && <ReferralsView currentUserId={currentUser?.id || ''} />}
           {activeTab === 'settings' && <SettingsView />}
         </div>
       </div>

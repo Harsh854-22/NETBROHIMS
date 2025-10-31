@@ -64,16 +64,16 @@ export default function PatientsView() {
     e.preventDefault()
 
     // Create user
-    const user = await createUser(formData.email, formData.name, 'patient', formData.password, formData.phone)
+    const result = await createUser(formData.email, formData.password, 'patient', formData.name, formData.phone)
     
-    if (!user) {
-      alert('Error creating patient user')
+    if (!result.success || !result.user) {
+      alert(result.message || 'Error creating patient user')
       return
     }
 
     // Create patient profile
     const { error } = await supabase.from('patients').insert({
-      user_id: user.id,
+      user_id: result.user.id,
       date_of_birth: formData.date_of_birth || null,
       gender: formData.gender || null,
       address: formData.address || null,
