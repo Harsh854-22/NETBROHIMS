@@ -44,6 +44,8 @@ export default function LoginPage() {
         router.push('/patient')
       } else if (user.role === 'pharmacist') {
         router.push('/pharmacist')
+      } else if (user.role === 'staff') {
+        router.push('/staff')
       } else {
         setError('Invalid user role')
         setLoading(false)

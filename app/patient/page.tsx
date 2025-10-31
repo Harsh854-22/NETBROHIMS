@@ -6,6 +6,7 @@ import { getCurrentUser, logout } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Icons } from '@/components/Icons'
+import CancelAppointmentModal from '@/components/patient/CancelAppointmentModal'
 
 type User = {
   id: string
@@ -40,6 +41,8 @@ export default function PatientPage() {
   const [patientId, setPatientId] = useState<string>('')
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
+  const [cancelModal, setCancelModal] = useState<{ isOpen: boolean; appointment: Appointment | null }>({ isOpen: false, appointment: null })
+  const [notification, setNotification] = useState<{ show: boolean; message: string }>({ show: false, message: '' })
 
   useEffect(() => {
     checkAuth()
@@ -90,6 +93,19 @@ export default function PatientPage() {
     if (!error && data) {
       setAppointments(data)
     }
+  }
+
+  const handleCancelAppointment = (appointment: Appointment) => {
+    setCancelModal({ isOpen: true, appointment })
+  }
+
+  const handleCancelSuccess = () => {
+    setCancelModal({ isOpen: false, appointment: null })
+    setNotification({ show: true, message: 'Appointment cancelled successfully!' })
+    setTimeout(() => {
+      setNotification({ show: false, message: '' })
+    }, 3000)
+    loadAppointments()
   }
 
   const handleLogout = async () => {
@@ -296,6 +312,19 @@ export default function PatientPage() {
                           <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-1">The doctor will review and confirm your appointment soon.</p>
                         </div>
                       )}
+
+                      {/* Cancel Button - Show for pending, accepted, or rescheduled appointments */}
+                      {(appointment.status === 'pending' || appointment.status === 'accepted' || appointment.status === 'rescheduled') && !appointment.completed_at && (
+                        <div className="mt-4 pt-4 border-t border-[var(--border)]">
+                          <button
+                            onClick={() => handleCancelAppointment(appointment)}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg hover:scale-[1.02] transition-all font-semibold text-sm shadow-md"
+                          >
+                            <Icons.x className="w-4 h-4" />
+                            Cancel Appointment
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <span className={`px-3 py-1.5 text-xs font-bold rounded-full uppercase flex items-center gap-1 ${
                       appointment.status === 'pending' ? 'bg-yellow-500 text-white' :
@@ -317,6 +346,30 @@ export default function PatientPage() {
           )}
         </div>
       </div>
+
+      {/* Success Notification */}
+      {notification.show && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3">
+            <Icons.check className="w-5 h-5" />
+            <p className="font-semibold">{notification.message}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Appointment Modal */}
+      {cancelModal.appointment && (
+        <CancelAppointmentModal
+          isOpen={cancelModal.isOpen}
+          onClose={() => setCancelModal({ isOpen: false, appointment: null })}
+          appointmentId={cancelModal.appointment.id}
+          appointmentDate={cancelModal.appointment.appointment_date}
+          appointmentTime={cancelModal.appointment.appointment_time}
+          doctorName={cancelModal.appointment.doctors?.users?.name || 'Doctor'}
+          userId={currentUser?.id || ''}
+          onSuccess={handleCancelSuccess}
+        />
+      )}
     </div>
   )
 }

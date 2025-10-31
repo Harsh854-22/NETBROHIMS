@@ -5,14 +5,10 @@ import { useRouter } from 'next/navigation'
 import { getCurrentUser, logout } from '@/lib/auth'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Icons } from '@/components/Icons'
-import DashboardView from '@/components/admin/DashboardView'
-import DoctorsView from '@/components/admin/DoctorsView'
-import PatientsView from '@/components/admin/PatientsView'
-import AppointmentsView from '@/components/admin/AppointmentsView'
-import PharmacistsView from '@/components/admin/PharmacistsView'
-import StaffView from '@/components/admin/StaffView'
-import ReferralsView from '@/components/admin/ReferralsView'
-import SettingsView from '@/components/admin/SettingsView'
+import RoomsView from '@/components/staff/RoomsView'
+import BedsView from '@/components/staff/BedsView'
+import AppointmentsView from '@/components/staff/AppointmentsView'
+import PatientsView from '@/components/staff/PatientsView'
 
 type User = {
   id: string
@@ -22,12 +18,11 @@ type User = {
   phone?: string
 }
 
-export default function AdminPage() {
+export default function StaffPage() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'doctors' | 'patients' | 'appointments' | 'pharmacists' | 'staff' | 'referrals' | 'settings'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'rooms' | 'beds' | 'appointments' | 'patients'>('rooms')
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     checkAuth()
@@ -35,7 +30,7 @@ export default function AdminPage() {
 
   const checkAuth = async () => {
     const user = await getCurrentUser()
-    if (!user || user.role !== 'admin') {
+    if (!user || user.role !== 'staff') {
       router.push('/login')
       return
     }
@@ -72,18 +67,18 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] shadow-lg">
-              <Icons.shield className="w-7 h-7 text-white" />
+              <Icons.clipboard className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[var(--foreground)]">Admin Dashboard</h1>
-              <p className="text-sm text-[var(--muted-foreground)] font-medium">Hospital Management System</p>
+              <h1 className="text-2xl font-bold text-[var(--foreground)]">Staff Dashboard</h1>
+              <p className="text-sm text-[var(--muted-foreground)] font-medium">Room & Patient Management</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
             <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-[var(--foreground)]">{currentUser?.name}</p>
-              <p className="text-xs text-[var(--muted-foreground)]">Administrator</p>
+              <p className="text-xs text-[var(--muted-foreground)]">Staff Member</p>
             </div>
             <button
               onClick={handleLogout}
@@ -101,37 +96,26 @@ export default function AdminPage() {
         <div className="bg-[var(--card)] border-2 border-[var(--border)] rounded-xl shadow-lg p-2">
           <nav className="flex space-x-2 overflow-x-auto">
             <button
-              onClick={() => setActiveTab('dashboard')}
+              onClick={() => setActiveTab('rooms')}
               className={`flex items-center gap-2 flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'dashboard'
+                activeTab === 'rooms'
                   ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md'
                   : 'text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]'
               }`}
             >
-              <Icons.chart className="w-4 h-4" />
-              <span className="hidden sm:inline">Dashboard</span>
+              <Icons.building className="w-4 h-4" />
+              <span>Rooms</span>
             </button>
             <button
-              onClick={() => setActiveTab('doctors')}
+              onClick={() => setActiveTab('beds')}
               className={`flex items-center gap-2 flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'doctors'
+                activeTab === 'beds'
                   ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md'
                   : 'text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]'
               }`}
             >
-              <Icons.stethoscope className="w-4 h-4" />
-              <span className="hidden sm:inline">Doctors</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('patients')}
-              className={`flex items-center gap-2 flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'patients'
-                  ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md'
-                  : 'text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]'
-              }`}
-            >
-              <Icons.users className="w-4 h-4" />
-              <span className="hidden sm:inline">Patients</span>
+              <Icons.bed className="w-4 h-4" />
+              <span>Beds</span>
             </button>
             <button
               onClick={() => setActiveTab('appointments')}
@@ -142,65 +126,28 @@ export default function AdminPage() {
               }`}
             >
               <Icons.calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">Appointments</span>
+              <span>Appointments</span>
             </button>
             <button
-              onClick={() => setActiveTab('pharmacists')}
+              onClick={() => setActiveTab('patients')}
               className={`flex items-center gap-2 flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'pharmacists'
+                activeTab === 'patients'
                   ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md'
                   : 'text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]'
               }`}
             >
-              <Icons.pill className="w-4 h-4" />
-              <span className="hidden sm:inline">Pharmacists</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('staff')}
-              className={`flex items-center gap-2 flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'staff'
-                  ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md'
-                  : 'text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]'
-              }`}
-            >
-              <Icons.clipboard className="w-4 h-4" />
-              <span className="hidden sm:inline">Staff</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('referrals')}
-              className={`flex items-center gap-2 flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'referrals'
-                  ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md'
-                  : 'text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]'
-              }`}
-            >
-              <Icons.userPlus className="w-4 h-4" />
-              <span className="hidden sm:inline">Referrals</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`flex items-center gap-2 flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'settings'
-                  ? 'bg-gradient-to-r from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] text-white shadow-md'
-                  : 'text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]'
-              }`}
-            >
-              <Icons.settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Settings</span>
+              <Icons.users className="w-4 h-4" />
+              <span>Patients</span>
             </button>
           </nav>
         </div>
 
         {/* Content */}
         <div className="mt-8 mb-12">
-          {activeTab === 'dashboard' && <DashboardView />}
-          {activeTab === 'doctors' && <DoctorsView currentUserId={currentUser?.id || ''} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
-          {activeTab === 'patients' && <PatientsView currentUserId={currentUser?.id || ''} />}
-          {activeTab === 'appointments' && <AppointmentsView searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
-          {activeTab === 'pharmacists' && <PharmacistsView />}
-          {activeTab === 'staff' && <StaffView />}
-          {activeTab === 'referrals' && <ReferralsView />}
-          {activeTab === 'settings' && <SettingsView />}
+          {activeTab === 'rooms' && <RoomsView />}
+          {activeTab === 'beds' && <BedsView />}
+          {activeTab === 'appointments' && <AppointmentsView />}
+          {activeTab === 'patients' && <PatientsView />}
         </div>
       </div>
     </div>

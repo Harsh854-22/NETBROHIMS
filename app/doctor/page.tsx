@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Icons } from '@/components/Icons'
+import ReferralModal from '@/components/doctor/ReferralModal'
 
 type User = {
   id: string
@@ -47,6 +48,16 @@ export default function DoctorPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'completed'>('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [referralModal, setReferralModal] = useState<{ isOpen: boolean; appointmentId: string | null; patientId: string | null }>({ isOpen: false, appointmentId: null, patientId: null })
+  const [notification, setNotification] = useState<{ show: boolean; message: string }>({ show: false, message: '' })
+  const [showBookingModal, setShowBookingModal] = useState(false)
+  const [patients, setPatients] = useState<{ id: string; name: string; email: string }[]>([])
+  const [bookingForm, setBookingForm] = useState({
+    patientId: '',
+    date: '',
+    time: '',
+    reason: ''
+  })
 
   useEffect(() => {
     checkAuth()
@@ -55,6 +66,7 @@ export default function DoctorPage() {
   useEffect(() => {
     if (doctorId) {
       loadAppointments()
+      loadPatients()
     }
   }, [doctorId, filter])
 
@@ -84,12 +96,13 @@ export default function DoctorPage() {
       .from('appointments')
       .select(`
         *,
-        patients (
+        patients!appointments_patient_id_fkey (
           id,
-          users:user_id (name, email, phone),
+          user_id,
           date_of_birth,
           gender,
-          medical_history
+          medical_history,
+          users:user_id (name, email, phone)
         )
       `)
       .eq('doctor_id', doctorId)
@@ -102,9 +115,70 @@ export default function DoctorPage() {
 
     const { data, error } = await query
 
-    if (!error && data) {
+    if (error) {
+      console.error('Error loading appointments:', error)
+    }
+
+    if (data) {
+      console.log('Loaded appointments:', data)
       setAppointments(data)
     }
+  }
+
+  const loadPatients = async () => {
+    const { data, error } = await supabase
+      .from('patients')
+      .select(`
+        id,
+        user_id,
+        users:user_id (name, email)
+      `)
+
+    if (error) {
+      console.error('Error loading patients:', error)
+    }
+
+    if (data) {
+      const patientList = data.map((p: any) => ({
+        id: p.id,
+        name: p.users?.name || '',
+        email: p.users?.email || ''
+      }))
+      setPatients(patientList)
+    }
+  }
+
+  const bookAppointment = async () => {
+    if (!bookingForm.patientId || !bookingForm.date || !bookingForm.time) {
+      alert('Please fill in all required fields')
+      return
+    }
+
+    const { error } = await supabase
+      .from('appointments')
+      .insert({
+        patient_id: bookingForm.patientId,
+        doctor_id: doctorId,
+        appointment_date: bookingForm.date,
+        appointment_time: bookingForm.time,
+        reason: bookingForm.reason,
+        status: 'accepted',
+        created_by: currentUser?.id
+      })
+
+    if (error) {
+      alert('Error booking appointment: ' + error.message)
+      return
+    }
+
+    setNotification({ show: true, message: 'Appointment booked successfully!' })
+    setTimeout(() => {
+      setNotification({ show: false, message: '' })
+    }, 3000)
+    
+    setShowBookingModal(false)
+    setBookingForm({ patientId: '', date: '', time: '', reason: '' })
+    loadAppointments()
   }
 
   const updateAppointmentStatus = async (appointmentId: string, status: string) => {
@@ -245,6 +319,71 @@ export default function DoctorPage() {
     loadAppointments()
   }
 
+  const handleReferPatient = (appointmentId: string, patientId: string) => {
+    setReferralModal({
+      isOpen: true,
+      appointmentId,
+      patientId
+    })
+  }
+
+  const handleReferralSuccess = () => {
+    setReferralModal({ isOpen: false, appointmentId: null, patientId: null })
+    setNotification({ show: true, message: 'Referral submitted successfully! Admin will review it.' })
+    setTimeout(() => {
+      setNotification({ show: false, message: '' })
+    }, 3000)
+    loadAppointments()
+  }
+
+  const sendAppointmentReminder = async (appointmentId: string) => {
+    try {
+      // Get appointment details
+      const { data: appointment } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          patients!appointments_patient_id_fkey (
+            users:user_id (name, phone)
+          )
+        `)
+        .eq('id', appointmentId)
+        .single()
+
+      if (!appointment) {
+        alert('Appointment not found')
+        return
+      }
+
+      const patientPhone = appointment.patients?.users?.phone
+      const patientName = appointment.patients?.users?.name
+
+      if (!patientPhone) {
+        alert('Patient phone number not available')
+        return
+      }
+
+      // Send SMS reminder using Fast2SMS
+      const message = `Hi ${patientName}, this is a reminder for your appointment on ${appointment.appointment_date} at ${appointment.appointment_time}. Dr. ${currentUser?.name}. NetBro HIMS`
+      
+      const response = await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.NEXT_PUBLIC_FAST2SMS_API_KEY}&route=dlt&sender_id=NBROHI&message=YOUR_TEMPLATE_ID&variables_values=${encodeURIComponent(message)}&flash=0&numbers=${patientPhone}`, {
+        method: 'GET'
+      })
+
+      if (response.ok) {
+        setNotification({ show: true, message: 'SMS reminder sent successfully!' })
+        setTimeout(() => {
+          setNotification({ show: false, message: '' })
+        }, 3000)
+      } else {
+        alert('Failed to send SMS reminder')
+      }
+    } catch (error) {
+      console.error('Error sending reminder:', error)
+      alert('Error sending reminder')
+    }
+  }
+
   const handleLogout = async () => {
     await logout()
     router.push('/login')
@@ -309,6 +448,13 @@ export default function DoctorPage() {
               <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-600 bg-clip-text text-transparent">My Appointments</h2>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full sm:w-auto">
+              <button
+                onClick={() => setShowBookingModal(true)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md whitespace-nowrap"
+              >
+                <Icons.plus className="w-4 h-4" />
+                Book Appointment
+              </button>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Icons.search className="w-4 h-4 text-[var(--muted-foreground)]" />
@@ -368,7 +514,7 @@ export default function DoctorPage() {
 
           {appointments.length === 0 ? (
             <div className="text-center py-16">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[var(--muted)] mb-4">
+              <div className="inline-flex   items-center justify-center w-20 h-20 rounded-full bg-[var(--muted)] mb-4">
                 <Icons.calendar className="w-10 h-10 text-[var(--muted-foreground)]" />
               </div>
               <p className="text-[var(--muted-foreground)] font-medium text-lg">No appointments found</p>
@@ -393,12 +539,135 @@ export default function DoctorPage() {
                   onUpdateStatus={updateAppointmentStatus}
                   onReschedule={rescheduleAppointment}
                   onSaveNotes={saveNotesAndPrescription}
+                  onReferPatient={handleReferPatient}
+                  onSendReminder={sendAppointmentReminder}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Success Notification */}
+      {notification.show && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3">
+            <Icons.check className="w-5 h-5" />
+            <p className="font-semibold">{notification.message}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Referral Modal */}
+      <ReferralModal
+        isOpen={referralModal.isOpen}
+        onClose={() => setReferralModal({ isOpen: false, appointmentId: null, patientId: null })}
+        appointmentId={referralModal.appointmentId || ''}
+        patientId={referralModal.patientId || ''}
+        currentDoctorId={doctorId}
+        onSuccess={handleReferralSuccess}
+      />
+
+      {/* Book Appointment Modal */}
+      {showBookingModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[var(--card)] rounded-2xl shadow-2xl max-w-md w-full border-2 border-[var(--border)] max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
+                    <Icons.calendar className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-[var(--foreground)]">Book Appointment</h3>
+                </div>
+                <button
+                  onClick={() => setShowBookingModal(false)}
+                  className="w-8 h-8 rounded-lg hover:bg-[var(--muted)] flex items-center justify-center transition-colors"
+                >
+                  <Icons.x className="w-5 h-5 text-[var(--muted-foreground)]" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-[var(--foreground)] mb-2">
+                    Select Patient *
+                  </label>
+                  <select
+                    value={bookingForm.patientId}
+                    onChange={(e) => setBookingForm({ ...bookingForm, patientId: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-[var(--input)] border-2 border-[var(--border)] rounded-lg text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
+                    required
+                  >
+                    <option value="">Choose a patient...</option>
+                    {patients.map(patient => (
+                      <option key={patient.id} value={patient.id}>
+                        {patient.name} ({patient.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-[var(--foreground)] mb-2">
+                    Appointment Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={bookingForm.date}
+                    onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-2.5 bg-[var(--input)] border-2 border-[var(--border)] rounded-lg text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-[var(--foreground)] mb-2">
+                    Appointment Time *
+                  </label>
+                  <input
+                    type="time"
+                    value={bookingForm.time}
+                    onChange={(e) => setBookingForm({ ...bookingForm, time: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-[var(--input)] border-2 border-[var(--border)] rounded-lg text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-[var(--foreground)] mb-2">
+                    Reason (Optional)
+                  </label>
+                  <textarea
+                    value={bookingForm.reason}
+                    onChange={(e) => setBookingForm({ ...bookingForm, reason: e.target.value })}
+                    placeholder="Enter reason for appointment..."
+                    className="w-full px-4 py-3 bg-[var(--input)] border-2 border-[var(--border)] rounded-lg text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent transition-all resize-none"
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={bookAppointment}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md"
+                >
+                  <Icons.check className="w-4 h-4" />
+                  Book Appointment
+                </button>
+                <button
+                  onClick={() => setShowBookingModal(false)}
+                  className="px-6 py-2.5 bg-[var(--secondary)] text-[var(--secondary-foreground)] rounded-lg hover:bg-[var(--accent)] transition-all font-semibold text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -407,12 +676,16 @@ function AppointmentCard({
   appointment, 
   onUpdateStatus, 
   onReschedule,
-  onSaveNotes
+  onSaveNotes,
+  onReferPatient,
+  onSendReminder
 }: { 
   appointment: Appointment
   onUpdateStatus: (id: string, status: string) => void
   onReschedule: (id: string, newDate: string, newTime: string, oldDate: string, oldTime: string) => void
   onSaveNotes: (id: string, notes: string, prescription: string) => void
+  onReferPatient: (appointmentId: string, patientId: string) => void
+  onSendReminder: (appointmentId: string) => void
 }) {
   const [showDetails, setShowDetails] = useState(false)
   const [showNotesForm, setShowNotesForm] = useState(false)
@@ -606,6 +879,13 @@ function AppointmentCard({
                 <Icons.calendar className="w-4 h-4" />
                 Reschedule
               </button>
+              <button
+                onClick={() => onSendReminder(appointment.id)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md"
+              >
+                <Icons.bell className="w-4 h-4" />
+                Send Reminder
+              </button>
             </>
           )}
           
@@ -617,6 +897,20 @@ function AppointmentCard({
               >
                 <Icons.notes className="w-4 h-4" />
                 {appointment.doctor_notes || appointment.prescription ? 'Edit Notes' : 'Add Notes'}
+              </button>
+              <button
+                onClick={() => onSendReminder(appointment.id)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md"
+              >
+                <Icons.bell className="w-4 h-4" />
+                Send Reminder
+              </button>
+              <button
+                onClick={() => onReferPatient(appointment.id, appointment.patient_id)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md"
+              >
+                <Icons.userPlus className="w-4 h-4" />
+                Refer
               </button>
               <button
                 onClick={() => {
