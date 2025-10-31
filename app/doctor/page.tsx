@@ -336,54 +336,6 @@ export default function DoctorPage() {
     loadAppointments()
   }
 
-  const sendAppointmentReminder = async (appointmentId: string) => {
-    try {
-      // Get appointment details
-      const { data: appointment } = await supabase
-        .from('appointments')
-        .select(`
-          *,
-          patients!appointments_patient_id_fkey (
-            users:user_id (name, phone)
-          )
-        `)
-        .eq('id', appointmentId)
-        .single()
-
-      if (!appointment) {
-        alert('Appointment not found')
-        return
-      }
-
-      const patientPhone = appointment.patients?.users?.phone
-      const patientName = appointment.patients?.users?.name
-
-      if (!patientPhone) {
-        alert('Patient phone number not available')
-        return
-      }
-
-      // Send SMS reminder using Fast2SMS
-      const message = `Hi ${patientName}, this is a reminder for your appointment on ${appointment.appointment_date} at ${appointment.appointment_time}. Dr. ${currentUser?.name}. NetBro HIMS`
-      
-      const response = await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.NEXT_PUBLIC_FAST2SMS_API_KEY}&route=dlt&sender_id=NBROHI&message=YOUR_TEMPLATE_ID&variables_values=${encodeURIComponent(message)}&flash=0&numbers=${patientPhone}`, {
-        method: 'GET'
-      })
-
-      if (response.ok) {
-        setNotification({ show: true, message: 'SMS reminder sent successfully!' })
-        setTimeout(() => {
-          setNotification({ show: false, message: '' })
-        }, 3000)
-      } else {
-        alert('Failed to send SMS reminder')
-      }
-    } catch (error) {
-      console.error('Error sending reminder:', error)
-      alert('Error sending reminder')
-    }
-  }
-
   const handleLogout = async () => {
     await logout()
     router.push('/login')
@@ -540,7 +492,6 @@ export default function DoctorPage() {
                   onReschedule={rescheduleAppointment}
                   onSaveNotes={saveNotesAndPrescription}
                   onReferPatient={handleReferPatient}
-                  onSendReminder={sendAppointmentReminder}
                 />
               ))}
             </div>
@@ -677,15 +628,13 @@ function AppointmentCard({
   onUpdateStatus, 
   onReschedule,
   onSaveNotes,
-  onReferPatient,
-  onSendReminder
+  onReferPatient
 }: { 
   appointment: Appointment
   onUpdateStatus: (id: string, status: string) => void
   onReschedule: (id: string, newDate: string, newTime: string, oldDate: string, oldTime: string) => void
   onSaveNotes: (id: string, notes: string, prescription: string) => void
   onReferPatient: (appointmentId: string, patientId: string) => void
-  onSendReminder: (appointmentId: string) => void
 }) {
   const [showDetails, setShowDetails] = useState(false)
   const [showNotesForm, setShowNotesForm] = useState(false)
@@ -879,13 +828,6 @@ function AppointmentCard({
                 <Icons.calendar className="w-4 h-4" />
                 Reschedule
               </button>
-              <button
-                onClick={() => onSendReminder(appointment.id)}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md"
-              >
-                <Icons.bell className="w-4 h-4" />
-                Send Reminder
-              </button>
             </>
           )}
           
@@ -897,13 +839,6 @@ function AppointmentCard({
               >
                 <Icons.notes className="w-4 h-4" />
                 {appointment.doctor_notes || appointment.prescription ? 'Edit Notes' : 'Add Notes'}
-              </button>
-              <button
-                onClick={() => onSendReminder(appointment.id)}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm shadow-md"
-              >
-                <Icons.bell className="w-4 h-4" />
-                Send Reminder
               </button>
               <button
                 onClick={() => onReferPatient(appointment.id, appointment.patient_id)}
