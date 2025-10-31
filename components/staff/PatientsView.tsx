@@ -2,17 +2,23 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { createUser } from '@/lib/auth'
 import { Icons } from '@/components/Icons'
 
 type Patient = {
   id: string
-  name: string
-  email: string
-  phone?: string
+  user_id: string
   date_of_birth?: string
+  gender?: string
   address?: string
   medical_history?: string
   created_at: string
+  users?: {
+    id: string
+    name: string
+    email: string
+    phone?: string
+  }
 }
 
 export default function PatientsView() {
@@ -25,7 +31,9 @@ export default function PatientsView() {
     name: '',
     email: '',
     phone: '',
+    password: '',
     date_of_birth: '',
+    gender: '',
     address: '',
     medical_history: ''
   })
@@ -38,7 +46,10 @@ export default function PatientsView() {
     setLoading(true)
     const { data, error } = await supabase
       .from('patients')
-      .select('*')
+      .select(`
+        *,
+        users:user_id (id, name, email, phone)
+      `)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -52,20 +63,33 @@ export default function PatientsView() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Create new patient
-    const { error } = await supabase
-      .from('patients')
-      .insert([formData])
+    // Create user
+    const user = await createUser(formData.email, formData.name, 'patient', formData.password, formData.phone)
+    
+    if (!user) {
+      alert('Error creating patient user')
+      return
+    }
+
+    // Create patient profile
+    const { error } = await supabase.from('patients').insert({
+      user_id: user.id,
+      date_of_birth: formData.date_of_birth || null,
+      gender: formData.gender || null,
+      address: formData.address || null,
+      medical_history: formData.medical_history || null
+    })
 
     if (error) {
-      console.error('Error creating patient:', error)
-      alert('Error creating patient')
-    } else {
-      alert('Patient created successfully!')
-      setShowModal(false)
-      resetForm()
-      loadPatients()
+      console.error('Error creating patient profile:', error)
+      alert('Error creating patient profile')
+      return
     }
+
+    alert('Patient created successfully!')
+    setShowModal(false)
+    resetForm()
+    loadPatients()
   }
 
   const resetForm = () => {
@@ -73,16 +97,19 @@ export default function PatientsView() {
       name: '',
       email: '',
       phone: '',
+      password: '',
       date_of_birth: '',
+      gender: '',
       address: '',
       medical_history: ''
     })
   }
 
   const filteredPatients = patients.filter(patient => {
-    const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         patient.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+    if (!patient || !patient.users) return false
+    const matchesSearch = patient.users.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         patient.users.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         patient.users.phone?.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesSearch
   })
 
@@ -131,19 +158,19 @@ export default function PatientsView() {
             <div key={patient.id} className="bg-[var(--card)] border-2 border-[var(--border)] rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
               <div className="flex items-start gap-3 mb-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--gradient-from)] via-[var(--gradient-via)] to-[var(--gradient-to)] flex items-center justify-center text-white font-bold text-lg">
-                  {patient.name.charAt(0).toUpperCase()}
+                  {patient.users?.name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-[var(--foreground)]">{patient.name}</h3>
-                  <p className="text-sm text-[var(--muted-foreground)]">{patient.email}</p>
+                  <h3 className="text-lg font-bold text-[var(--foreground)]">{patient.users?.name}</h3>
+                  <p className="text-sm text-[var(--muted-foreground)]">{patient.users?.email}</p>
                 </div>
               </div>
 
               <div className="space-y-2">
-                {patient.phone && (
+                {patient.users?.phone && (
                   <div className="flex items-center gap-2 text-sm text-[var(--foreground)]">
                     <Icons.phone className="w-4 h-4 text-[var(--muted-foreground)]" />
-                    <span>{patient.phone}</span>
+                    <span>{patient.users.phone}</span>
                   </div>
                 )}
                 {patient.date_of_birth && (
@@ -210,6 +237,19 @@ export default function PatientsView() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Password *</label>
+                <input
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full px-4 py-2.5 border-2 border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--primary)] bg-[var(--background)] text-[var(--foreground)]"
+                  placeholder="Set a secure password"
+                  minLength={6}
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Date of Birth</label>
                 <input
                   type="date"
@@ -217,6 +257,20 @@ export default function PatientsView() {
                   onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
                   className="w-full px-4 py-2.5 border-2 border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--primary)] bg-[var(--background)] text-[var(--foreground)]"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Gender</label>
+                <select
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                  className="w-full px-4 py-2.5 border-2 border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--primary)] bg-[var(--background)] text-[var(--foreground)]"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
               </div>
 
               <div>

@@ -2,41 +2,52 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { getCurrentUser } from '@/lib/auth'
 import { Icons } from '@/components/Icons'
 
 type Appointment = {
   id: string
+  patient_id: string
+  doctor_id: string
   appointment_date: string
   appointment_time: string
   reason?: string
   status: string
-  patient?: {
-    name: string
-    email: string
-    phone?: string
-  }
-  doctor?: {
-    user?: {
+  patients?: {
+    id: string
+    users?: {
       name: string
       email: string
+      phone?: string
     }
+  }
+  doctors?: {
+    id: string
     specialization?: string
+    users?: {
+      name: string
+      email: string
+      phone?: string
+    }
   }
 }
 
 type Doctor = {
   id: string
-  user?: {
+  users?: {
     name: string
+    email: string
   }
   specialization?: string
 }
 
 type Patient = {
   id: string
-  name: string
-  email: string
-  phone?: string
+  users?: {
+    name: string
+    email: string
+    phone?: string
+  }
 }
 
 export default function AppointmentsView() {
@@ -68,16 +79,13 @@ export default function AppointmentsView() {
       .from('appointments')
       .select(`
         *,
-        patient:patients!appointments_patient_id_fkey (
-          name,
-          email,
-          phone
+        patients (
+          id,
+          users:user_id (name, email, phone)
         ),
-        doctor:doctors!appointments_doctor_id_fkey (
-          user:users!doctors_user_id_fkey (
-            name,
-            email
-          ),
+        doctors (
+          id,
+          users:user_id (name, email, phone),
           specialization
         )
       `)
@@ -90,14 +98,17 @@ export default function AppointmentsView() {
       .select(`
         id,
         specialization,
-        user:users!doctors_user_id_fkey (name)
+        users:user_id (name, email)
       `)
 
     // Load patients
     const { data: patientsData } = await supabase
       .from('patients')
-      .select('id, name, email, phone')
-      .order('name')
+      .select(`
+        id,
+        users:user_id (name, email, phone)
+      `)
+      .order('created_at', { ascending: false })
 
     if (appointmentsError) {
       console.error('Error loading appointments:', appointmentsError)
@@ -113,17 +124,17 @@ export default function AppointmentsView() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const submitData = {
-      patient_id: formData.patient_id,
-      doctor_id: formData.doctor_id,
-      appointment_date: formData.appointment_date,
-      appointment_time: formData.appointment_time,
-      reason: formData.reason,
-      status: editingAppointment ? editingAppointment.status : 'pending'
-    }
-
     if (editingAppointment) {
       // Update existing appointment (reschedule)
+      const submitData = {
+        patient_id: formData.patient_id,
+        doctor_id: formData.doctor_id,
+        appointment_date: formData.appointment_date,
+        appointment_time: formData.appointment_time,
+        reason: formData.reason,
+        status: editingAppointment.status
+      }
+
       const { error } = await supabase
         .from('appointments')
         .update(submitData)
@@ -131,19 +142,33 @@ export default function AppointmentsView() {
 
       if (error) {
         console.error('Error updating appointment:', error)
-        alert('Error updating appointment')
+        alert('Error updating appointment: ' + (error.message || 'Unknown error'))
       } else {
         alert('Appointment rescheduled successfully!')
       }
     } else {
-      // Create new appointment
+      // Create new appointment - need current user ID
+      const currentUser = await getCurrentUser()
+      if (!currentUser) {
+        alert('Error: User not logged in')
+        return
+      }
+
       const { error } = await supabase
         .from('appointments')
-        .insert([submitData])
+        .insert([{
+          patient_id: formData.patient_id,
+          doctor_id: formData.doctor_id,
+          appointment_date: formData.appointment_date,
+          appointment_time: formData.appointment_time,
+          reason: formData.reason,
+          status: 'pending',
+          created_by: currentUser.id
+        }])
 
       if (error) {
         console.error('Error creating appointment:', error)
-        alert('Error creating appointment')
+        alert('Error creating appointment: ' + (error.message || 'Unknown error'))
       } else {
         alert('Appointment scheduled successfully!')
       }
@@ -158,8 +183,8 @@ export default function AppointmentsView() {
   const handleReschedule = (appointment: Appointment) => {
     setEditingAppointment(appointment)
     setFormData({
-      patient_id: appointment.patient?.email || '',
-      doctor_id: appointment.doctor?.user?.email || '',
+      patient_id: appointment.patient_id,
+      doctor_id: appointment.doctor_id,
       appointment_date: appointment.appointment_date,
       appointment_time: appointment.appointment_time,
       reason: appointment.reason || ''
@@ -190,8 +215,8 @@ export default function AppointmentsView() {
   }
 
   const filteredAppointments = appointments.filter(apt => {
-    const matchesSearch = apt.patient?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         apt.doctor?.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = apt.patients?.users?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         apt.doctors?.users?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          apt.reason?.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesSearch
   })
@@ -244,18 +269,18 @@ export default function AppointmentsView() {
                 <div className="flex-1">
                   <div className="flex items-start gap-3 mb-3">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-3 mb-4">
                         <Icons.user className="w-5 h-5 text-[var(--muted-foreground)]" />
-                        <h3 className="text-lg font-bold text-[var(--foreground)]">{appointment.patient?.name}</h3>
+                        <h3 className="text-lg font-bold text-[var(--foreground)]">{appointment.patients?.users?.name}</h3>
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(appointment.status)}`}>
                           {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)] mb-1">
                         <Icons.stethoscope className="w-4 h-4" />
-                        <span>Dr. {appointment.doctor?.user?.name}</span>
-                        {appointment.doctor?.specialization && (
-                          <span className="text-xs">({appointment.doctor.specialization})</span>
+                        <span>Dr. {appointment.doctors?.users?.name}</span>
+                        {appointment.doctors?.specialization && (
+                          <span className="text-xs">({appointment.doctors.specialization})</span>
                         )}
                       </div>
                       <div className="flex items-center gap-4 text-sm text-[var(--muted-foreground)]">
@@ -316,7 +341,7 @@ export default function AppointmentsView() {
                 >
                   <option value="">Select Patient</option>
                   {patients.map((patient) => (
-                    <option key={patient.id} value={patient.id}>{patient.name}</option>
+                    <option key={patient.id} value={patient.id}>{patient.users?.name}</option>
                   ))}
                 </select>
               </div>
@@ -332,7 +357,7 @@ export default function AppointmentsView() {
                   <option value="">Select Doctor</option>
                   {doctors.map((doctor) => (
                     <option key={doctor.id} value={doctor.id}>
-                      Dr. {doctor.user?.name} {doctor.specialization && `- ${doctor.specialization}`}
+                      Dr. {doctor.users?.name} {doctor.specialization && `- ${doctor.specialization}`}
                     </option>
                   ))}
                 </select>

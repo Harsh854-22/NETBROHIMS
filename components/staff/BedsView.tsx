@@ -13,14 +13,17 @@ type Bed = {
   assigned_date?: string
   discharge_date?: string
   notes?: string
-  room?: {
+  rooms?: {
     room_number: string
     room_type: string
     floor: string
   }
-  patient?: {
-    name: string
-    phone?: string
+  patients?: {
+    id: string
+    users?: {
+      name: string
+      phone?: string
+    }
   }
 }
 
@@ -31,8 +34,10 @@ type Room = {
 
 type Patient = {
   id: string
-  name: string
-  phone?: string
+  users?: {
+    name: string
+    phone?: string
+  }
 }
 
 export default function BedsView() {
@@ -65,31 +70,47 @@ export default function BedsView() {
       .from('beds')
       .select(`
         *,
-        room:rooms(room_number, room_type, floor),
-        patient:patients(name, phone)
+        rooms!inner(room_number, room_type, floor),
+        patients(id, users:user_id(name, phone))
       `)
       .order('created_at', { ascending: false })
 
     // Load rooms
-    const { data: roomsData } = await supabase
+    const { data: roomsData, error: roomsError } = await supabase
       .from('rooms')
       .select('id, room_number')
       .order('room_number')
 
     // Load patients
-    const { data: patientsData } = await supabase
+    const { data: patientsData, error: patientsError } = await supabase
       .from('patients')
-      .select('id, name, phone')
-      .order('name')
+      .select(`
+        id,
+        users:user_id(name, phone)
+      `)
+      .order('created_at', { ascending: false })
 
     if (bedsError) {
       console.error('Error loading beds:', bedsError)
+      if (bedsError.message?.includes('relation') || bedsError.code === '42P01') {
+        alert('⚠️ Database tables not found!\n\nPlease run the migration:\n1. Open Supabase Dashboard\n2. Go to SQL Editor\n3. Run: database/migrations/005_add_staff_and_rooms_system.sql')
+      }
     } else {
       setBeds(bedsData || [])
     }
 
-    setRooms(roomsData || [])
-    setPatients(patientsData || [])
+    if (roomsError) {
+      console.error('Error loading rooms:', roomsError)
+    } else {
+      setRooms(roomsData || [])
+    }
+
+    if (patientsError) {
+      console.error('Error loading patients:', patientsError)
+    } else {
+      setPatients(patientsData || [])
+    }
+
     setLoading(false)
   }
 
@@ -197,8 +218,8 @@ export default function BedsView() {
 
   const filteredBeds = beds.filter(bed => {
     const matchesSearch = bed.bed_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         bed.room?.room_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         bed.patient?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+                         bed.rooms?.room_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         bed.patients?.users?.name?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = filterStatus === 'all' || bed.status === filterStatus
     return matchesSearch && matchesStatus
   })
@@ -270,7 +291,7 @@ export default function BedsView() {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="text-xl font-bold text-[var(--foreground)]">Bed {bed.bed_number}</h3>
-                  <p className="text-sm text-[var(--muted-foreground)]">Room {bed.room?.room_number}</p>
+                  <p className="text-sm text-[var(--muted-foreground)]">Room {bed.rooms?.room_number}</p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(bed.status)}`}>
                   {bed.status.charAt(0).toUpperCase() + bed.status.slice(1)}
@@ -280,12 +301,12 @@ export default function BedsView() {
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2">
                   <Icons.building className="w-4 h-4 text-[var(--muted-foreground)]" />
-                  <span className="text-sm text-[var(--foreground)]">Floor {bed.room?.floor}</span>
+                  <span className="text-sm text-[var(--foreground)]">Floor {bed.rooms?.floor}</span>
                 </div>
-                {bed.patient && (
+                {bed.patients?.users && (
                   <div className="flex items-center gap-2">
                     <Icons.user className="w-4 h-4 text-[var(--muted-foreground)]" />
-                    <span className="text-sm text-[var(--foreground)]">{bed.patient.name}</span>
+                    <span className="text-sm text-[var(--foreground)]">{bed.patients.users.name}</span>
                   </div>
                 )}
                 {bed.notes && (
@@ -382,7 +403,7 @@ export default function BedsView() {
                   >
                     <option value="">Select Patient</option>
                     {patients.map((patient) => (
-                      <option key={patient.id} value={patient.id}>{patient.name}</option>
+                      <option key={patient.id} value={patient.id}>{patient.users?.name}</option>
                     ))}
                   </select>
                 </div>
