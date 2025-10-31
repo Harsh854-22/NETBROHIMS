@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser, logout } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
-import { format } from 'date-fns'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Icons } from '@/components/Icons'
 import ReferralModal from '@/components/doctor/ReferralModal'
@@ -13,7 +12,7 @@ type User = {
   id: string
   email: string
   name: string
-  role: 'admin' | 'doctor' | 'patient' | 'pharmacist'
+  role: 'superadmin' | 'admin' | 'doctor' | 'patient' | 'pharmacist' | 'staff'
   phone?: string
 }
 
@@ -139,10 +138,10 @@ export default function DoctorPage() {
     }
 
     if (data) {
-      const patientList = data.map((p: any) => ({
+      const patientList = data.map((p: { id: string; users: { name?: string; email?: string }[] }) => ({
         id: p.id,
-        name: p.users?.name || '',
-        email: p.users?.email || ''
+        name: p.users?.[0]?.name || '',
+        email: p.users?.[0]?.email || ''
       }))
       setPatients(patientList)
     }

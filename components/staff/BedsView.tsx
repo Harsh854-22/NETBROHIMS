@@ -86,7 +86,7 @@ export default function BedsView() {
       .from('patients')
       .select(`
         id,
-        users:user_id(name, phone)
+        users:user_id!inner(name, phone)
       `)
       .order('created_at', { ascending: false })
 
@@ -108,7 +108,15 @@ export default function BedsView() {
     if (patientsError) {
       console.error('Error loading patients:', patientsError)
     } else {
-      setPatients(patientsData || [])
+      // Transform patients data to handle array response
+      const transformedPatients = (patientsData || []).map((p: {
+        id: string
+        users: { name: string; phone?: string }[]
+      }) => ({
+        id: p.id,
+        users: Array.isArray(p.users) && p.users.length > 0 ? p.users[0] : undefined
+      }))
+      setPatients(transformedPatients)
     }
 
     setLoading(false)
@@ -117,7 +125,15 @@ export default function BedsView() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const submitData: any = {
+    const submitData: {
+      room_id: string
+      bed_number: string
+      status: string
+      notes: string | null
+      patient_id?: string | null
+      assigned_date?: string | null
+      discharge_date?: string | null
+    } = {
       room_id: formData.room_id,
       bed_number: formData.bed_number,
       status: formData.status,

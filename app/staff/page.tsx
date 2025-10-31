@@ -14,7 +14,7 @@ type User = {
   id: string
   email: string
   name: string
-  role: 'admin' | 'doctor' | 'patient' | 'pharmacist' | 'staff'
+  role: 'superadmin' | 'admin' | 'doctor' | 'patient' | 'pharmacist' | 'staff'
   phone?: string
 }
 

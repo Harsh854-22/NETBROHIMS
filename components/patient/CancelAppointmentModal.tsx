@@ -164,7 +164,7 @@ export default function CancelAppointmentModal({
                   <div className="text-sm">
                     <p className="font-semibold text-yellow-600 dark:text-yellow-400 mb-1">Important:</p>
                     <p className="text-[var(--muted-foreground)]">
-                      Once cancelled, you'll need to contact the hospital admin to schedule a new appointment.
+                      Once cancelled, you&apos;ll need to contact the hospital admin to schedule a new appointment.
                       This action cannot be undone.
                     </p>
                   </div>
