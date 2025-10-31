@@ -116,8 +116,28 @@ export default function AppointmentsView() {
       setAppointments(appointmentsData || [])
     }
 
-    setDoctors(doctorsData || [])
-    setPatients(patientsData || [])
+    // Transform doctors data to handle array response
+    const transformedDoctors = (doctorsData || []).map((d: {
+      id: string
+      specialization?: string
+      users: { name: string; email: string }[]
+    }) => ({
+      id: d.id,
+      specialization: d.specialization,
+      users: Array.isArray(d.users) && d.users.length > 0 ? d.users[0] : undefined
+    }))
+
+    // Transform patients data to handle array response
+    const transformedPatients = (patientsData || []).map((p: {
+      id: string
+      users: { name: string; email: string; phone?: string }[]
+    }) => ({
+      id: p.id,
+      users: Array.isArray(p.users) && p.users.length > 0 ? p.users[0] : undefined
+    }))
+
+    setDoctors(transformedDoctors)
+    setPatients(transformedPatients)
     setLoading(false)
   }
 

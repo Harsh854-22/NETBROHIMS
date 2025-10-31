@@ -108,7 +108,15 @@ export default function BedsView() {
     if (patientsError) {
       console.error('Error loading patients:', patientsError)
     } else {
-      setPatients(patientsData || [])
+      // Transform patients data to handle array response
+      const transformedPatients = (patientsData || []).map((p: {
+        id: string
+        users: { name: string; phone?: string }[]
+      }) => ({
+        id: p.id,
+        users: Array.isArray(p.users) && p.users.length > 0 ? p.users[0] : undefined
+      }))
+      setPatients(transformedPatients)
     }
 
     setLoading(false)

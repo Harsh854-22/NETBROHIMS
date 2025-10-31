@@ -51,7 +51,17 @@ export default function ReferralModal({
       .order('specialization')
 
     if (!error && data) {
-      setDoctors(data as Doctor[])
+      // Transform the data to handle the array response from Supabase
+      const transformedData = data.map((d: {
+        id: string
+        specialization?: string
+        users: { name: string; email: string }[]
+      }) => ({
+        id: d.id,
+        specialization: d.specialization,
+        users: Array.isArray(d.users) && d.users.length > 0 ? d.users[0] : undefined
+      }))
+      setDoctors(transformedData)
     }
   }
 
